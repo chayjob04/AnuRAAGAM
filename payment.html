@@ -345,10 +345,18 @@ button{ font-family:inherit; cursor:pointer; }
 }
 @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
 
-.reveal{ opacity:0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
-.reveal.is-visible{ opacity:1; transform:none; }
+.reveal{
+  animation: fadeUp .7s ease both;
+  animation-delay: .05s;
+}
+.reveal:nth-child(2){ animation-delay: .12s; }
+.reveal:nth-child(3){ animation-delay: .19s; }
+@keyframes fadeUp{
+  from{ opacity:0; transform: translateY(22px); }
+  to{ opacity:1; transform:none; }
+}
 @media (prefers-reduced-motion: reduce){
-  .reveal{ opacity:1; transform:none; transition:none; }
+  .reveal{ animation:none; opacity:1; transform:none; }
 }
 
 ::selection{ background: var(--coral); color:var(--off-white); }
@@ -637,19 +645,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Simple scroll-reveal
-  const reveals = document.querySelectorAll('.reveal');
-  if ('IntersectionObserver' in window && reveals.length) {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible');
-          io.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.15 });
-    reveals.forEach(el => io.observe(el));
-  }
 });
 
 </script>
