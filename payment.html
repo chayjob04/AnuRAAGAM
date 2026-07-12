@@ -364,6 +364,8 @@ button{ font-family:inherit; cursor:pointer; }
 :focus-visible{ outline: 3px solid var(--off-white); outline-offset:3px; }
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 <div class="grain"></div>
@@ -378,7 +380,8 @@ button{ font-family:inherit; cursor:pointer; }
       <li><a href="gallery.html">Gallery</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
-      <li><a href="events.html" class="nav-cta">Get Tickets</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html">Admin</a></li>
+      <li id="nav-auth-slot"><a href="login.html">Login</a></li>
     </ul>
   </nav>
 </header>
@@ -391,10 +394,14 @@ button{ font-family:inherit; cursor:pointer; }
 </section>
 
 <section class="section" style="padding-top:30px;">
-  <div class="container" style="display:grid; grid-template-columns: 1.1fr 1fr; gap:40px; align-items:start;">
+  <div class="container" id="checkout-loading">
+    <p style="opacity:.8;">Loading event details…</p>
+  </div>
+
+  <div class="container" id="checkout-content" style="display:none; grid-template-columns: 1.1fr 1fr; gap:40px; align-items:start;">
 
     <!-- LEFT: order summary -->
-    <div id="ticket-summary-wrap" class="reveal">
+    <div id="ticket-summary-wrap">
       <div id="ticket-summary" class="ticket" style="grid-template-columns:1fr;">
         <div class="ticket-main">
           <span class="tag-pill" style="color:var(--coral); border-color:var(--coral);">Your Ticket</span>
@@ -429,12 +436,13 @@ button{ font-family:inherit; cursor:pointer; }
           <li>✔ E-ticket sent instantly to your email & phone</li>
           <li>✔ Show your ticket QR at the venue entry</li>
           <li>✔ Tickets are non-transferable, refundable up to 48 hrs before</li>
+          <li>✔ Track this booking anytime under <a href="profile.html" style="text-decoration:underline;">My Orders</a></li>
         </ul>
       </div>
     </div>
 
     <!-- RIGHT: payment form -->
-    <div class="reveal">
+    <div>
       <form id="payment-form" class="card-paper card">
         <span class="eyebrow" style="color:var(--red);">Attendee details</span>
         <div class="form-field" style="margin-top:18px;">
@@ -451,50 +459,14 @@ button{ font-family:inherit; cursor:pointer; }
         </div>
 
         <span class="eyebrow" style="color:var(--red); margin-top:10px; display:block;">Payment method</span>
-        <div style="display:flex; gap:12px; margin:16px 0; flex-wrap:wrap;">
-          <label style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:.9rem;">
-            <input type="radio" name="paymethod" value="upi" checked> UPI
-          </label>
-          <label style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:.9rem;">
-            <input type="radio" name="paymethod" value="card"> Card
-          </label>
-          <label style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:.9rem;">
-            <input type="radio" name="paymethod" value="netbanking"> Netbanking
-          </label>
-        </div>
+        <p style="font-size:.85rem; opacity:.75; margin-top:10px;">
+          You'll choose UPI, card or netbanking on the next screen — handled securely by Razorpay.
+        </p>
 
-        <div id="panel-upi" class="pay-panel form-field">
-          <label for="upi">UPI ID</label>
-          <input type="text" id="upi" placeholder="yourname@upi">
-        </div>
-        <div id="panel-card" class="pay-panel form-field" style="display:none;">
-          <label for="cardnum">Card number</label>
-          <input type="text" id="cardnum" placeholder="1234 5678 9012 3456">
-          <div style="display:flex; gap:14px; margin-top:14px;">
-            <div style="flex:1;">
-              <label for="expiry">Expiry</label>
-              <input type="text" id="expiry" placeholder="MM/YY">
-            </div>
-            <div style="flex:1;">
-              <label for="cvv">CVV</label>
-              <input type="text" id="cvv" placeholder="123">
-            </div>
-          </div>
-        </div>
-        <div id="panel-netbanking" class="pay-panel form-field" style="display:none;">
-          <label for="bank">Select bank</label>
-          <select id="bank">
-            <option>SBI</option>
-            <option>HDFC Bank</option>
-            <option>ICICI Bank</option>
-            <option>Axis Bank</option>
-            <option>Kotak Mahindra Bank</option>
-          </select>
-        </div>
-
-        <button type="submit" class="btn btn-coral" style="width:100%; margin-top:12px;">🔒 Pay & Confirm Seat</button>
-        <p style="text-align:center; margin-top:14px; font-size:.8rem; opacity:.65;">
-          This is a demo checkout — no real payment is processed. Connect a gateway like Razorpay to accept live payments.
+        <button type="submit" class="btn btn-coral" style="width:100%; margin-top:18px;">🔒 Pay & Confirm Seat</button>
+        <p id="payment-status" style="text-align:center; margin-top:12px; font-size:.85rem; min-height:1.2em;"></p>
+        <p style="text-align:center; margin-top:6px; font-size:.8rem; opacity:.65;">
+          Payments are processed securely via Razorpay. Runs in demo mode until a live gateway is connected.
         </p>
       </form>
 
@@ -505,8 +477,9 @@ button{ font-family:inherit; cursor:pointer; }
         <p style="margin-top:10px; opacity:.85;">Your seat for <strong id="success-event"></strong> is confirmed.</p>
         <p style="margin-top:6px; opacity:.85;">Amount paid: <strong id="success-total"></strong></p>
         <p style="margin-top:16px; font-size:.9rem; opacity:.7;">A confirmation with your e-ticket has been sent to your email & phone.</p>
-        <div style="margin-top:24px;">
-          <a href="events.html" class="btn btn-solid">Back to Events</a>
+        <div style="margin-top:24px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+          <a href="profile.html" class="btn btn-solid">View My Orders</a>
+          <a href="events.html" class="btn btn-outline">Back to Events</a>
         </div>
       </div>
     </div>
@@ -549,7 +522,141 @@ button{ font-family:inherit; cursor:pointer; }
 </footer>
 
 <script>
+// js/supabase-client.js
+// Fill these in with your own Supabase project's values:
+// Dashboard → Project Settings → API → Project URL / anon public key.
+// The anon key is safe to expose publicly — it only grants what your
+// Row Level Security policies (see supabase/schema.sql) allow.
+
+const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR-ANON-PUBLIC-KEY';
+
+// Guarded: if the CDN script didn't load (network hiccup, ad-blocker, etc.)
+// or the project hasn't been configured yet, pages should degrade gracefully
+// instead of crashing outright.
+let supabaseClient = null;
+try {
+  if (window.supabase && typeof window.supabase.createClient === 'function') {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } else {
+    console.error('Anuraagam: Supabase SDK did not load — check your connection or the CDN script tag.');
+  }
+} catch (err) {
+  console.error('Anuraagam: Supabase client failed to initialise:', err);
+}
+
+</script>
+<script>
+// js/auth.js
+// Shared across all pages: keeps the nav's Login/Profile/Admin link in sync
+// with the current Supabase session, plus helpers to guard pages.
+// Every function checks that supabaseClient actually loaded first, so a
+// CDN hiccup degrades gracefully instead of crashing the page.
+
+async function getCurrentUser() {
+  if (!supabaseClient) return null;
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    return session ? session.user : null;
+  } catch (err) {
+    console.error('getCurrentUser failed:', err);
+    return null;
+  }
+}
+
+async function getMyProfile() {
+  if (!supabaseClient) return null;
+  const user = await getCurrentUser();
+  if (!user) return null;
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    if (error) { console.warn('profile fetch failed:', error.message); return null; }
+    return data;
+  } catch (err) {
+    console.error('getMyProfile failed:', err);
+    return null;
+  }
+}
+
+async function logout() {
+  if (supabaseClient) {
+    try { await supabaseClient.auth.signOut(); } catch (err) { console.error('logout failed:', err); }
+  }
+  window.location.href = 'index.html';
+}
+
+// Swap the nav's auth slot between "Login" and "Profile", and reveal the
+// Admin link if the signed-in user is an admin. Runs on every page.
+async function refreshAuthNav() {
+  const authSlot = document.querySelector('#nav-auth-slot');
+  const adminLink = document.querySelector('#nav-admin-link');
+
+  if (!supabaseClient) {
+    if (authSlot) authSlot.innerHTML = '<a href="login.html">Login</a>';
+    if (adminLink) adminLink.style.display = 'none';
+    return;
+  }
+
+  const user = await getCurrentUser();
+
+  if (!user) {
+    if (authSlot) authSlot.innerHTML = '<a href="login.html">Login</a>';
+    if (adminLink) adminLink.style.display = 'none';
+    return;
+  }
+
+  if (authSlot) authSlot.innerHTML = '<a href="profile.html">Profile</a>';
+
+  if (adminLink) {
+    const profile = await getMyProfile();
+    adminLink.style.display = (profile && profile.is_admin) ? 'inline-block' : 'none';
+  }
+}
+
+// Call at the top of pages that require a logged-in user (e.g. payment, profile).
+// Redirects to login.html (preserving where to return to) if not signed in,
+// or if Supabase itself isn't reachable/configured.
+async function requireLogin(returnTo) {
+  const dest = returnTo || window.location.pathname.split('/').pop();
+
+  if (!supabaseClient) {
+    alert("We couldn't connect to the login service. Please check your connection and try again.");
+    window.location.href = 'login.html?redirect=' + encodeURIComponent(dest);
+    return null;
+  }
+
+  const user = await getCurrentUser();
+  if (!user) {
+    window.location.href = 'login.html?redirect=' + encodeURIComponent(dest);
+    return null;
+  }
+  return user;
+}
+
+// Call at the top of admin.html. Redirects home if not an admin.
+async function requireAdmin() {
+  const user = await requireLogin('admin.html');
+  if (!user) return null;
+  const profile = await getMyProfile();
+  if (!profile || !profile.is_admin) {
+    alert('This page is only available to Anuraagam admins.');
+    window.location.href = 'index.html';
+    return null;
+  }
+  return { user, profile };
+}
+
+document.addEventListener('DOMContentLoaded', refreshAuthNav);
+
+</script>
+<script>
 // ================= AnuRaagam shared behaviour =================
+// Payment-page logic lives inline in payment.html (it needs the event
+// fetched from Supabase first). This file just holds truly shared bits.
 
 document.addEventListener('DOMContentLoaded', () => {
   // Mobile nav toggle
@@ -566,75 +673,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
-  // Book Now buttons on events page -> stash selection, go to payment page
-  document.querySelectorAll('[data-book-event]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const event = {
-        name: btn.dataset.bookEvent,
-        date: btn.dataset.eventDate,
-        venue: btn.dataset.eventVenue,
-        price: Number(btn.dataset.eventPrice)
-      };
-      localStorage.setItem('anuraagam_selected_event', JSON.stringify(event));
-      window.location.href = 'payment.html';
-    });
-  });
-
-  // Payment page: hydrate ticket summary + live total, mock submit
-  const summaryBox = document.querySelector('#ticket-summary');
-  if (summaryBox) {
-    let event = null;
-    try {
-      event = JSON.parse(localStorage.getItem('anuraagam_selected_event'));
-    } catch (e) { event = null; }
-
-    if (!event) {
-      event = { name: 'Anuraagam Open Jam Night', date: 'Sat, 25 Jul 2026 · 7:00 PM', venue: 'The Studio, Jubilee Hills, Hyderabad', price: 499 };
-    }
-
-    document.querySelector('#sum-name').textContent = event.name;
-    document.querySelector('#sum-date').textContent = event.date;
-    document.querySelector('#sum-venue').textContent = event.venue;
-    document.querySelector('#sum-price').textContent = '₹' + event.price;
-
-    const qtyInput = document.querySelector('#qty');
-    const totalEl = document.querySelector('#sum-total');
-    const feeEl = document.querySelector('#sum-fee');
-
-    function recalc() {
-      const qty = Math.max(1, parseInt(qtyInput.value || '1', 10));
-      qtyInput.value = qty;
-      const subtotal = qty * event.price;
-      const fee = Math.round(subtotal * 0.02);
-      feeEl.textContent = '₹' + fee;
-      totalEl.textContent = '₹' + (subtotal + fee);
-    }
-    qtyInput.addEventListener('input', recalc);
-    recalc();
-
-    // toggle payment method panels
-    document.querySelectorAll('input[name="paymethod"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        document.querySelectorAll('.pay-panel').forEach(p => p.style.display = 'none');
-        document.querySelector('#panel-' + radio.value).style.display = 'block';
-      });
-    });
-
-    const form = document.querySelector('#payment-form');
-    const successBox = document.querySelector('#payment-success');
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        form.style.display = 'none';
-        document.querySelector('#ticket-summary-wrap').style.display = 'none';
-        successBox.style.display = 'block';
-        successBox.querySelector('#success-event').textContent = event.name;
-        successBox.querySelector('#success-total').textContent = totalEl.textContent;
-        successBox.scrollIntoView({ behavior: 'smooth' });
-      });
-    }
-  }
-
   // Contact form mock submit
   const contactForm = document.querySelector('#contact-form');
   if (contactForm) {
@@ -644,9 +682,180 @@ document.addEventListener('DOMContentLoaded', () => {
       contactForm.reset();
     });
   }
-
 });
 
+</script>
+<script>
+(async function () {
+  // Must be logged in to book — preserve the full URL (with ?event=...) so
+  // login.html can send them straight back here afterwards.
+  const returnTo = window.location.pathname.split('/').pop() + window.location.search;
+  const user = await requireLogin(returnTo);
+  if (!user) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get('event');
+  const loadingEl = document.querySelector('#checkout-loading');
+  const contentEl = document.querySelector('#checkout-content');
+
+  if (!eventId) {
+    loadingEl.innerHTML = '<p>No event selected. <a href="events.html" style="text-decoration:underline; color:var(--off-white);">Browse events</a> to pick one.</p>';
+    return;
+  }
+
+  const { data: event, error } = await supabaseClient
+    .from('events')
+    .select('*')
+    .eq('id', eventId)
+    .eq('is_published', true)
+    .single();
+
+  if (error || !event) {
+    loadingEl.innerHTML = '<p>This event isn\'t available anymore. <a href="events.html" style="text-decoration:underline; color:var(--off-white);">See upcoming sessions</a>.</p>';
+    return;
+  }
+
+  loadingEl.style.display = 'none';
+  contentEl.style.display = 'grid';
+
+  const dateLabel = new Date(event.event_date).toLocaleString('en-IN', {
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit'
+  });
+  document.querySelector('#sum-name').textContent = event.name;
+  document.querySelector('#sum-date').textContent = dateLabel;
+  document.querySelector('#sum-venue').textContent = event.venue;
+  document.querySelector('#sum-price').textContent = '₹' + event.price;
+
+  // Prefill attendee details from profile/session where available
+  const profile = await getMyProfile();
+  if (user.email) document.querySelector('#email').value = user.email;
+  if (user.phone) document.querySelector('#phone').value = user.phone;
+  if (profile && profile.full_name) document.querySelector('#name').value = profile.full_name;
+  if (profile && profile.phone) document.querySelector('#phone').value = profile.phone;
+
+  const qtyInput = document.querySelector('#qty');
+  const totalEl = document.querySelector('#sum-total');
+  const feeEl = document.querySelector('#sum-fee');
+  const statusEl = document.querySelector('#payment-status');
+
+  function recalc() {
+    const qty = Math.max(1, Math.min(10, parseInt(qtyInput.value || '1', 10)));
+    qtyInput.value = qty;
+    const subtotal = qty * event.price;
+    const fee = Math.round(subtotal * 0.02);
+    feeEl.textContent = '₹' + fee;
+    totalEl.textContent = '₹' + (subtotal + fee);
+  }
+  qtyInput.addEventListener('input', recalc);
+  recalc();
+
+  const form = document.querySelector('#payment-form');
+  const successBox = document.querySelector('#payment-success');
+
+  function showSuccess(paidTotalLabel) {
+    form.style.display = 'none';
+    document.querySelector('#ticket-summary-wrap').style.display = 'none';
+    successBox.style.display = 'block';
+    successBox.querySelector('#success-event').textContent = event.name;
+    successBox.querySelector('#success-total').textContent = paidTotalLabel || totalEl.textContent;
+    successBox.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function setStatus(msg, isError) {
+    statusEl.textContent = msg || '';
+    statusEl.style.color = isError ? '#ffb4a3' : 'inherit';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payBtn = form.querySelector('button[type="submit"]');
+    const originalLabel = payBtn.textContent;
+    payBtn.disabled = true;
+    payBtn.textContent = 'Processing…';
+    setStatus('Contacting payment gateway…');
+
+    const qty = Math.max(1, Math.min(10, parseInt(qtyInput.value || '1', 10)));
+    const attendeeName = document.querySelector('#name').value;
+    const attendeeEmail = document.querySelector('#email').value;
+    const attendeePhone = document.querySelector('#phone').value;
+
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) throw new Error('not-logged-in');
+
+      const orderRes = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ eventId, qty, attendeeName, attendeeEmail, attendeePhone })
+      });
+
+      if (!orderRes.ok) throw new Error('order-endpoint-unavailable');
+      const order = await orderRes.json();
+      if (!order.orderId) throw new Error('order-creation-failed');
+
+      setStatus('');
+
+      const options = {
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Anuraagam',
+        description: event.name,
+        order_id: order.orderId,
+        prefill: { name: attendeeName, email: attendeeEmail, contact: attendeePhone },
+        theme: { color: '#E31C1C' },
+        handler: async function (response) {
+          setStatus('Verifying payment…');
+          try {
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(response)
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.verified) {
+              showSuccess('₹' + (order.amount / 100));
+            } else {
+              setStatus('Payment could not be verified. If money was deducted, contact us with payment ID ' + response.razorpay_payment_id + '.', true);
+              payBtn.disabled = false;
+              payBtn.textContent = originalLabel;
+            }
+          } catch (err) {
+            setStatus('Verification failed. If money was deducted, contact us with payment ID ' + response.razorpay_payment_id + '.', true);
+            payBtn.disabled = false;
+            payBtn.textContent = originalLabel;
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            payBtn.disabled = false;
+            payBtn.textContent = originalLabel;
+            setStatus('');
+          }
+        }
+      };
+
+      if (typeof Razorpay === 'undefined') throw new Error('razorpay-sdk-not-loaded');
+      const rzp = new Razorpay(options);
+      rzp.on('payment.failed', function () {
+        setStatus('Payment failed. Please try again.', true);
+        payBtn.disabled = false;
+        payBtn.textContent = originalLabel;
+      });
+      rzp.open();
+      payBtn.disabled = false;
+      payBtn.textContent = originalLabel;
+
+    } catch (err) {
+      console.warn('Live payment unavailable, using demo checkout:', err);
+      setStatus('Demo mode: live payment gateway isn\'t connected yet, so this booking wasn\'t saved to your account.', false);
+      setTimeout(() => showSuccess(), 600);
+    }
+  });
+})();
 </script>
 </body>
 </html>

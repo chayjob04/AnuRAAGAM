@@ -364,6 +364,7 @@ button{ font-family:inherit; cursor:pointer; }
 :focus-visible{ outline: 3px solid var(--off-white); outline-offset:3px; }
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   .frame{
     aspect-ratio:1/1; border-radius:50%;
@@ -388,6 +389,8 @@ button{ font-family:inherit; cursor:pointer; }
       <li><a href="gallery.html" class="active">Gallery</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html">Admin</a></li>
+      <li id="nav-auth-slot"><a href="login.html">Login</a></li>
       <li><a href="events.html" class="nav-cta">Get Tickets</a></li>
     </ul>
   </nav>
@@ -459,7 +462,141 @@ button{ font-family:inherit; cursor:pointer; }
 </footer>
 
 <script>
+// js/supabase-client.js
+// Fill these in with your own Supabase project's values:
+// Dashboard → Project Settings → API → Project URL / anon public key.
+// The anon key is safe to expose publicly — it only grants what your
+// Row Level Security policies (see supabase/schema.sql) allow.
+
+const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR-ANON-PUBLIC-KEY';
+
+// Guarded: if the CDN script didn't load (network hiccup, ad-blocker, etc.)
+// or the project hasn't been configured yet, pages should degrade gracefully
+// instead of crashing outright.
+let supabaseClient = null;
+try {
+  if (window.supabase && typeof window.supabase.createClient === 'function') {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } else {
+    console.error('Anuraagam: Supabase SDK did not load — check your connection or the CDN script tag.');
+  }
+} catch (err) {
+  console.error('Anuraagam: Supabase client failed to initialise:', err);
+}
+
+</script>
+<script>
+// js/auth.js
+// Shared across all pages: keeps the nav's Login/Profile/Admin link in sync
+// with the current Supabase session, plus helpers to guard pages.
+// Every function checks that supabaseClient actually loaded first, so a
+// CDN hiccup degrades gracefully instead of crashing the page.
+
+async function getCurrentUser() {
+  if (!supabaseClient) return null;
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    return session ? session.user : null;
+  } catch (err) {
+    console.error('getCurrentUser failed:', err);
+    return null;
+  }
+}
+
+async function getMyProfile() {
+  if (!supabaseClient) return null;
+  const user = await getCurrentUser();
+  if (!user) return null;
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    if (error) { console.warn('profile fetch failed:', error.message); return null; }
+    return data;
+  } catch (err) {
+    console.error('getMyProfile failed:', err);
+    return null;
+  }
+}
+
+async function logout() {
+  if (supabaseClient) {
+    try { await supabaseClient.auth.signOut(); } catch (err) { console.error('logout failed:', err); }
+  }
+  window.location.href = 'index.html';
+}
+
+// Swap the nav's auth slot between "Login" and "Profile", and reveal the
+// Admin link if the signed-in user is an admin. Runs on every page.
+async function refreshAuthNav() {
+  const authSlot = document.querySelector('#nav-auth-slot');
+  const adminLink = document.querySelector('#nav-admin-link');
+
+  if (!supabaseClient) {
+    if (authSlot) authSlot.innerHTML = '<a href="login.html">Login</a>';
+    if (adminLink) adminLink.style.display = 'none';
+    return;
+  }
+
+  const user = await getCurrentUser();
+
+  if (!user) {
+    if (authSlot) authSlot.innerHTML = '<a href="login.html">Login</a>';
+    if (adminLink) adminLink.style.display = 'none';
+    return;
+  }
+
+  if (authSlot) authSlot.innerHTML = '<a href="profile.html">Profile</a>';
+
+  if (adminLink) {
+    const profile = await getMyProfile();
+    adminLink.style.display = (profile && profile.is_admin) ? 'inline-block' : 'none';
+  }
+}
+
+// Call at the top of pages that require a logged-in user (e.g. payment, profile).
+// Redirects to login.html (preserving where to return to) if not signed in,
+// or if Supabase itself isn't reachable/configured.
+async function requireLogin(returnTo) {
+  const dest = returnTo || window.location.pathname.split('/').pop();
+
+  if (!supabaseClient) {
+    alert("We couldn't connect to the login service. Please check your connection and try again.");
+    window.location.href = 'login.html?redirect=' + encodeURIComponent(dest);
+    return null;
+  }
+
+  const user = await getCurrentUser();
+  if (!user) {
+    window.location.href = 'login.html?redirect=' + encodeURIComponent(dest);
+    return null;
+  }
+  return user;
+}
+
+// Call at the top of admin.html. Redirects home if not an admin.
+async function requireAdmin() {
+  const user = await requireLogin('admin.html');
+  if (!user) return null;
+  const profile = await getMyProfile();
+  if (!profile || !profile.is_admin) {
+    alert('This page is only available to Anuraagam admins.');
+    window.location.href = 'index.html';
+    return null;
+  }
+  return { user, profile };
+}
+
+document.addEventListener('DOMContentLoaded', refreshAuthNav);
+
+</script>
+<script>
 // ================= AnuRaagam shared behaviour =================
+// Payment-page logic lives inline in payment.html (it needs the event
+// fetched from Supabase first). This file just holds truly shared bits.
 
 document.addEventListener('DOMContentLoaded', () => {
   // Mobile nav toggle
@@ -476,75 +613,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
-  // Book Now buttons on events page -> stash selection, go to payment page
-  document.querySelectorAll('[data-book-event]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const event = {
-        name: btn.dataset.bookEvent,
-        date: btn.dataset.eventDate,
-        venue: btn.dataset.eventVenue,
-        price: Number(btn.dataset.eventPrice)
-      };
-      localStorage.setItem('anuraagam_selected_event', JSON.stringify(event));
-      window.location.href = 'payment.html';
-    });
-  });
-
-  // Payment page: hydrate ticket summary + live total, mock submit
-  const summaryBox = document.querySelector('#ticket-summary');
-  if (summaryBox) {
-    let event = null;
-    try {
-      event = JSON.parse(localStorage.getItem('anuraagam_selected_event'));
-    } catch (e) { event = null; }
-
-    if (!event) {
-      event = { name: 'Anuraagam Open Jam Night', date: 'Sat, 25 Jul 2026 · 7:00 PM', venue: 'The Studio, Jubilee Hills, Hyderabad', price: 499 };
-    }
-
-    document.querySelector('#sum-name').textContent = event.name;
-    document.querySelector('#sum-date').textContent = event.date;
-    document.querySelector('#sum-venue').textContent = event.venue;
-    document.querySelector('#sum-price').textContent = '₹' + event.price;
-
-    const qtyInput = document.querySelector('#qty');
-    const totalEl = document.querySelector('#sum-total');
-    const feeEl = document.querySelector('#sum-fee');
-
-    function recalc() {
-      const qty = Math.max(1, parseInt(qtyInput.value || '1', 10));
-      qtyInput.value = qty;
-      const subtotal = qty * event.price;
-      const fee = Math.round(subtotal * 0.02);
-      feeEl.textContent = '₹' + fee;
-      totalEl.textContent = '₹' + (subtotal + fee);
-    }
-    qtyInput.addEventListener('input', recalc);
-    recalc();
-
-    // toggle payment method panels
-    document.querySelectorAll('input[name="paymethod"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        document.querySelectorAll('.pay-panel').forEach(p => p.style.display = 'none');
-        document.querySelector('#panel-' + radio.value).style.display = 'block';
-      });
-    });
-
-    const form = document.querySelector('#payment-form');
-    const successBox = document.querySelector('#payment-success');
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        form.style.display = 'none';
-        document.querySelector('#ticket-summary-wrap').style.display = 'none';
-        successBox.style.display = 'block';
-        successBox.querySelector('#success-event').textContent = event.name;
-        successBox.querySelector('#success-total').textContent = totalEl.textContent;
-        successBox.scrollIntoView({ behavior: 'smooth' });
-      });
-    }
-  }
-
   // Contact form mock submit
   const contactForm = document.querySelector('#contact-form');
   if (contactForm) {
@@ -554,7 +622,6 @@ document.addEventListener('DOMContentLoaded', () => {
       contactForm.reset();
     });
   }
-
 });
 
 </script>

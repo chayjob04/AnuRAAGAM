@@ -365,6 +365,7 @@ button{ font-family:inherit; cursor:pointer; }
 :focus-visible{ outline: 3px solid var(--off-white); outline-offset:3px; }
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="grain"></div>
@@ -379,7 +380,8 @@ button{ font-family:inherit; cursor:pointer; }
       <li><a href="gallery.html">Gallery</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
-      <li><a href="events.html" class="nav-cta">Get Tickets</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html">Admin</a></li>
+      <li id="nav-auth-slot"><a href="login.html">Login</a></li>
     </ul>
   </nav>
 </header>
@@ -393,68 +395,8 @@ button{ font-family:inherit; cursor:pointer; }
 </section>
 
 <section class="section">
-  <div class="container" style="display:grid; gap:28px;">
-
-    <div class="ticket reveal">
-      <div class="ticket-main">
-        <span class="badge-live">Booking open</span>
-        <h3 style="font-size:1.5rem; margin-top:14px;">Anuraagam Open Jam — Vol. 12</h3>
-        <p style="margin-top:10px; opacity:.75;">Sat, 25 Jul 2026 · 7:00 PM – 10:00 PM</p>
-        <p style="opacity:.75;">📍 The Studio, Jubilee Hills, Hyderabad</p>
-        <p style="margin-top:14px; font-size:.92rem; opacity:.8;">Open mic slots + our house band jamming through Telugu classics and modern fusion. Beginner-friendly — first-timers welcome.</p>
-        <div style="margin-top:20px; display:flex; gap:14px; flex-wrap:wrap;">
-          <button class="btn btn-coral" data-book-event="Anuraagam Open Jam — Vol. 12"
-            data-event-date="Sat, 25 Jul 2026 · 7:00 PM"
-            data-event-venue="The Studio, Jubilee Hills, Hyderabad"
-            data-event-price="499">🎟 Book Now — ₹499</button>
-        </div>
-      </div>
-      <div class="ticket-stub">
-        <span style="font-family:var(--font-display); font-size:1.4rem;">25</span>
-        <span style="font-size:.75rem; text-transform:uppercase;">JUL</span>
-      </div>
-    </div>
-
-    <div class="ticket reveal">
-      <div class="ticket-main">
-        <span class="tag-pill" style="color:var(--red-deep); border-color:var(--red-deep);">Ticketed Showcase</span>
-        <h3 style="font-size:1.5rem; margin-top:14px;">Raagam Reimagined — Featured Artist Night</h3>
-        <p style="margin-top:10px; opacity:.75;">Sat, 08 Aug 2026 · 6:30 PM – 9:30 PM</p>
-        <p style="opacity:.75;">📍 Cafe Nostalgia, Kondapur, Hyderabad</p>
-        <p style="margin-top:14px; font-size:.92rem; opacity:.8;">A curated, seated evening with our resident vocalist and sax player reworking classic raagams with a live fusion band.</p>
-        <div style="margin-top:20px;">
-          <button class="btn btn-coral" data-book-event="Raagam Reimagined — Featured Artist Night"
-            data-event-date="Sat, 08 Aug 2026 · 6:30 PM"
-            data-event-venue="Cafe Nostalgia, Kondapur, Hyderabad"
-            data-event-price="799">🎟 Book Now — ₹799</button>
-        </div>
-      </div>
-      <div class="ticket-stub">
-        <span style="font-family:var(--font-display); font-size:1.4rem;">08</span>
-        <span style="font-size:.75rem; text-transform:uppercase;">AUG</span>
-      </div>
-    </div>
-
-    <div class="ticket reveal">
-      <div class="ticket-main">
-        <span class="tag-pill" style="color:var(--coral); border-color:var(--coral);">Open Jam Night</span>
-        <h3 style="font-size:1.5rem; margin-top:14px;">Anuraagam Open Jam — Vol. 13</h3>
-        <p style="margin-top:10px; opacity:.75;">Sat, 22 Aug 2026 · 7:00 PM – 10:00 PM</p>
-        <p style="opacity:.75;">📍 The Studio, Jubilee Hills, Hyderabad</p>
-        <p style="margin-top:14px; font-size:.92rem; opacity:.8;">Back by demand — our monthly open mic jam. Sign up on arrival for a singing slot, or just come to soak in the room.</p>
-        <div style="margin-top:20px;">
-          <button class="btn btn-coral" data-book-event="Anuraagam Open Jam — Vol. 13"
-            data-event-date="Sat, 22 Aug 2026 · 7:00 PM"
-            data-event-venue="The Studio, Jubilee Hills, Hyderabad"
-            data-event-price="499">🎟 Book Now — ₹499</button>
-        </div>
-      </div>
-      <div class="ticket-stub">
-        <span style="font-family:var(--font-display); font-size:1.4rem;">22</span>
-        <span style="font-size:.75rem; text-transform:uppercase;">AUG</span>
-      </div>
-    </div>
-
+  <div class="container" id="events-container" style="display:grid; gap:28px;">
+    <p style="opacity:.75;">Loading upcoming sessions…</p>
   </div>
 </section>
 
@@ -503,7 +445,141 @@ button{ font-family:inherit; cursor:pointer; }
 </footer>
 
 <script>
+// js/supabase-client.js
+// Fill these in with your own Supabase project's values:
+// Dashboard → Project Settings → API → Project URL / anon public key.
+// The anon key is safe to expose publicly — it only grants what your
+// Row Level Security policies (see supabase/schema.sql) allow.
+
+const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR-ANON-PUBLIC-KEY';
+
+// Guarded: if the CDN script didn't load (network hiccup, ad-blocker, etc.)
+// or the project hasn't been configured yet, pages should degrade gracefully
+// instead of crashing outright.
+let supabaseClient = null;
+try {
+  if (window.supabase && typeof window.supabase.createClient === 'function') {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } else {
+    console.error('Anuraagam: Supabase SDK did not load — check your connection or the CDN script tag.');
+  }
+} catch (err) {
+  console.error('Anuraagam: Supabase client failed to initialise:', err);
+}
+
+</script>
+<script>
+// js/auth.js
+// Shared across all pages: keeps the nav's Login/Profile/Admin link in sync
+// with the current Supabase session, plus helpers to guard pages.
+// Every function checks that supabaseClient actually loaded first, so a
+// CDN hiccup degrades gracefully instead of crashing the page.
+
+async function getCurrentUser() {
+  if (!supabaseClient) return null;
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    return session ? session.user : null;
+  } catch (err) {
+    console.error('getCurrentUser failed:', err);
+    return null;
+  }
+}
+
+async function getMyProfile() {
+  if (!supabaseClient) return null;
+  const user = await getCurrentUser();
+  if (!user) return null;
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    if (error) { console.warn('profile fetch failed:', error.message); return null; }
+    return data;
+  } catch (err) {
+    console.error('getMyProfile failed:', err);
+    return null;
+  }
+}
+
+async function logout() {
+  if (supabaseClient) {
+    try { await supabaseClient.auth.signOut(); } catch (err) { console.error('logout failed:', err); }
+  }
+  window.location.href = 'index.html';
+}
+
+// Swap the nav's auth slot between "Login" and "Profile", and reveal the
+// Admin link if the signed-in user is an admin. Runs on every page.
+async function refreshAuthNav() {
+  const authSlot = document.querySelector('#nav-auth-slot');
+  const adminLink = document.querySelector('#nav-admin-link');
+
+  if (!supabaseClient) {
+    if (authSlot) authSlot.innerHTML = '<a href="login.html">Login</a>';
+    if (adminLink) adminLink.style.display = 'none';
+    return;
+  }
+
+  const user = await getCurrentUser();
+
+  if (!user) {
+    if (authSlot) authSlot.innerHTML = '<a href="login.html">Login</a>';
+    if (adminLink) adminLink.style.display = 'none';
+    return;
+  }
+
+  if (authSlot) authSlot.innerHTML = '<a href="profile.html">Profile</a>';
+
+  if (adminLink) {
+    const profile = await getMyProfile();
+    adminLink.style.display = (profile && profile.is_admin) ? 'inline-block' : 'none';
+  }
+}
+
+// Call at the top of pages that require a logged-in user (e.g. payment, profile).
+// Redirects to login.html (preserving where to return to) if not signed in,
+// or if Supabase itself isn't reachable/configured.
+async function requireLogin(returnTo) {
+  const dest = returnTo || window.location.pathname.split('/').pop();
+
+  if (!supabaseClient) {
+    alert("We couldn't connect to the login service. Please check your connection and try again.");
+    window.location.href = 'login.html?redirect=' + encodeURIComponent(dest);
+    return null;
+  }
+
+  const user = await getCurrentUser();
+  if (!user) {
+    window.location.href = 'login.html?redirect=' + encodeURIComponent(dest);
+    return null;
+  }
+  return user;
+}
+
+// Call at the top of admin.html. Redirects home if not an admin.
+async function requireAdmin() {
+  const user = await requireLogin('admin.html');
+  if (!user) return null;
+  const profile = await getMyProfile();
+  if (!profile || !profile.is_admin) {
+    alert('This page is only available to Anuraagam admins.');
+    window.location.href = 'index.html';
+    return null;
+  }
+  return { user, profile };
+}
+
+document.addEventListener('DOMContentLoaded', refreshAuthNav);
+
+</script>
+<script>
 // ================= AnuRaagam shared behaviour =================
+// Payment-page logic lives inline in payment.html (it needs the event
+// fetched from Supabase first). This file just holds truly shared bits.
 
 document.addEventListener('DOMContentLoaded', () => {
   // Mobile nav toggle
@@ -520,75 +596,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
-  // Book Now buttons on events page -> stash selection, go to payment page
-  document.querySelectorAll('[data-book-event]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const event = {
-        name: btn.dataset.bookEvent,
-        date: btn.dataset.eventDate,
-        venue: btn.dataset.eventVenue,
-        price: Number(btn.dataset.eventPrice)
-      };
-      localStorage.setItem('anuraagam_selected_event', JSON.stringify(event));
-      window.location.href = 'payment.html';
-    });
-  });
-
-  // Payment page: hydrate ticket summary + live total, mock submit
-  const summaryBox = document.querySelector('#ticket-summary');
-  if (summaryBox) {
-    let event = null;
-    try {
-      event = JSON.parse(localStorage.getItem('anuraagam_selected_event'));
-    } catch (e) { event = null; }
-
-    if (!event) {
-      event = { name: 'Anuraagam Open Jam Night', date: 'Sat, 25 Jul 2026 · 7:00 PM', venue: 'The Studio, Jubilee Hills, Hyderabad', price: 499 };
-    }
-
-    document.querySelector('#sum-name').textContent = event.name;
-    document.querySelector('#sum-date').textContent = event.date;
-    document.querySelector('#sum-venue').textContent = event.venue;
-    document.querySelector('#sum-price').textContent = '₹' + event.price;
-
-    const qtyInput = document.querySelector('#qty');
-    const totalEl = document.querySelector('#sum-total');
-    const feeEl = document.querySelector('#sum-fee');
-
-    function recalc() {
-      const qty = Math.max(1, parseInt(qtyInput.value || '1', 10));
-      qtyInput.value = qty;
-      const subtotal = qty * event.price;
-      const fee = Math.round(subtotal * 0.02);
-      feeEl.textContent = '₹' + fee;
-      totalEl.textContent = '₹' + (subtotal + fee);
-    }
-    qtyInput.addEventListener('input', recalc);
-    recalc();
-
-    // toggle payment method panels
-    document.querySelectorAll('input[name="paymethod"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        document.querySelectorAll('.pay-panel').forEach(p => p.style.display = 'none');
-        document.querySelector('#panel-' + radio.value).style.display = 'block';
-      });
-    });
-
-    const form = document.querySelector('#payment-form');
-    const successBox = document.querySelector('#payment-success');
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        form.style.display = 'none';
-        document.querySelector('#ticket-summary-wrap').style.display = 'none';
-        successBox.style.display = 'block';
-        successBox.querySelector('#success-event').textContent = event.name;
-        successBox.querySelector('#success-total').textContent = totalEl.textContent;
-        successBox.scrollIntoView({ behavior: 'smooth' });
-      });
-    }
-  }
-
   // Contact form mock submit
   const contactForm = document.querySelector('#contact-form');
   if (contactForm) {
@@ -598,9 +605,71 @@ document.addEventListener('DOMContentLoaded', () => {
       contactForm.reset();
     });
   }
-
 });
 
+</script>
+<script>
+(async function () {
+  const container = document.querySelector('#events-container');
+
+  if (!supabaseClient) {
+    container.innerHTML = `<p style="opacity:.85;">Couldn't connect to load events. Please check your connection and refresh.</p>`;
+    return;
+  }
+
+  const now = new Date();
+
+  const { data: events, error } = await supabaseClient
+    .from('events')
+    .select('*')
+    .eq('is_published', true)
+    .gte('event_date', now.toISOString())
+    .order('event_date', { ascending: true });
+
+  if (error) {
+    container.innerHTML = `<p style="color:var(--off-white);">Couldn't load events right now. Please refresh, or check back shortly.</p>`;
+    return;
+  }
+
+  if (!events || events.length === 0) {
+    container.innerHTML = `
+      <div class="card-paper card" style="text-align:center;">
+        <p>No sessions scheduled just yet — check back soon, or follow us for announcements.</p>
+        <a href="contact.html" class="btn btn-coral" style="margin-top:16px;">Get Notified</a>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = events.map(ev => {
+    const d = new Date(ev.event_date);
+    const day = d.toLocaleDateString('en-IN', { day: '2-digit' });
+    const month = d.toLocaleDateString('en-IN', { month: 'short' }).toUpperCase();
+    const dateLabel = d.toLocaleString('en-IN', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit'
+    });
+    const isShowcase = ev.tagline.toLowerCase().includes('showcase');
+
+    return `
+      <div class="ticket reveal">
+        <div class="ticket-main">
+          <span class="tag-pill" style="color:${isShowcase ? 'var(--red-deep)' : 'var(--coral)'}; border-color:${isShowcase ? 'var(--red-deep)' : 'var(--coral)'};">${ev.tagline}</span>
+          <h3 style="font-size:1.5rem; margin-top:14px;">${ev.name}</h3>
+          <p style="margin-top:10px; opacity:.75;">${dateLabel}</p>
+          <p style="opacity:.75;">📍 ${ev.venue}</p>
+          ${ev.description ? `<p style="margin-top:14px; font-size:.92rem; opacity:.8;">${ev.description}</p>` : ''}
+          <div style="margin-top:20px;">
+            <a href="payment.html?event=${ev.id}" class="btn btn-coral">🎟 Book Now — ₹${ev.price}</a>
+          </div>
+        </div>
+        <div class="ticket-stub">
+          <span style="font-family:var(--font-display); font-size:1.4rem;">${day}</span>
+          <span style="font-size:.75rem; text-transform:uppercase;">${month}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+})();
 </script>
 </body>
 </html>
