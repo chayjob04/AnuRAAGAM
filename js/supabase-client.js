@@ -4,8 +4,8 @@
 // The anon key is safe to expose publicly — it only grants what your
 // Row Level Security policies (see supabase/schema.sql) allow.
 
-const SUPABASE_URL = 'https://hhchwsztykktfuzxpsqd.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_QNszIsenmt0tKfbzHQovjg_Gf6rsCTG';
+const SUPABASE_URL = 'https://xvhlyiunqmxlxpdtupsi.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_uthb4QrNZmy73TzSmwPPKw_s9UBfyAm';
 
 // Guarded: if the CDN script didn't load (network hiccup, ad-blocker, etc.)
 // or the project hasn't been configured yet, pages should degrade gracefully
