@@ -355,7 +355,13 @@
     try {
       const { error } = mode === 'mobile'
         ? await supabaseClient.auth.signInWithOtp({ phone: authIdentifier })
-        : await supabaseClient.auth.signInWithOtp({ email: authIdentifier });
+        await supabaseClient.auth.signInWithOtp({
+  email: authIdentifier,
+  options: {
+    shouldCreateUser: true,
+    emailRedirectTo: undefined
+  }
+});
 
       if (error) throw error;
 
