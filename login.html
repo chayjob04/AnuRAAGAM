@@ -353,16 +353,20 @@
     sendBtn.innerHTML = '<span class="spinner"></span>Sending code…';
 
     try {
-      const { error } = mode === 'mobile'
-        ? await supabaseClient.auth.signInWithOtp({ phone: authIdentifier })
-        await supabaseClient.auth.signInWithOtp({
-  email: authIdentifier,
-  options: {
-    shouldCreateUser: true,
-    emailRedirectTo: undefined
-  }
-});
+      const { error } =
+  mode === 'mobile'
+    ? await supabaseClient.auth.signInWithOtp({
+        phone: authIdentifier,
+      })
+    : await supabaseClient.auth.signInWithOtp({
+        email: authIdentifier,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: undefined,
+        },
+      });
 
+if (error) throw error;
       if (error) throw error;
 
       sentToLabel.textContent = contact;
