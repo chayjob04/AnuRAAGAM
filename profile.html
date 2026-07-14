@@ -478,8 +478,8 @@ button{ font-family:inherit; cursor:pointer; }
 // The anon key is safe to expose publicly — it only grants what your
 // Row Level Security policies (see supabase/schema.sql) allow.
 
-const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR-ANON-PUBLIC-KEY';
+const SUPABASE_URL = 'https://hhchwsztykktfuzxpsqd.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_QNszIsenmt0tKfbzHQovjg_Gf6rsCTG';
 
 // Guarded: if the CDN script didn't load (network hiccup, ad-blocker, etc.)
 // or the project hasn't been configured yet, pages should degrade gracefully
@@ -640,8 +640,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const user = await requireLogin('profile.html');
   if (!user) return;
 
+  const profile = await getMyProfile();
+  const displayName = profile && profile.full_name ? profile.full_name : null;
+
   document.querySelector('#profile-contact').textContent = user.email || user.phone || 'Anuraagam member';
-  document.querySelector('#welcome-heading').textContent = 'Welcome back';
+  document.querySelector('#welcome-heading').textContent = displayName ? `Welcome back, ${displayName}` : 'Welcome back';
 
   document.querySelector('#logout-btn').addEventListener('click', logout);
 

@@ -105,3 +105,5 @@ Swap the two Razorpay environment variables in Vercel to your **Live** keys once
 - Event prices are the single source of truth in the `events` table — the checkout API always re-reads the price server-side, so nothing can be tampered with from the browser.
 - Deleting an event doesn't delete past orders — bookings store a snapshot of the event's name/date/venue at the time of purchase.
 - A booking's **Upcoming/Closed** status on the Profile page is computed automatically by comparing the event's date to right now — nobody needs to set it manually.
+- The **"Next session"** badge in the homepage hero is fully dynamic — it's hidden entirely when there's no published upcoming event, and shows the real date once one exists. It pulls from the same query as the "Coming up next" section below it.
+- The three hero stats ("Sessions hosted", "Artists jammed", "Audience reached") are **plain hardcoded text** in `index.html`, not pulled from the database — update them by hand as those numbers grow. (Ask if you'd rather have one of these calculated automatically, e.g. from a count of published events.)

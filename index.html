@@ -393,7 +393,7 @@ button{ font-family:inherit; cursor:pointer; }
 <section class="section" style="padding-top:70px; padding-bottom:60px;">
   <div class="container grid-2">
     <div class="reveal">
-      <span class="badge-live">Next session · 25 Jul</span>
+      <span class="badge-live" id="hero-next-badge" style="display:none;"></span>
       <h1 style="font-size:clamp(2.6rem,6vw,4.6rem); line-height:1.03; margin-top:22px;">
         MORE THAN<br>A SONG.
       </h1>
@@ -405,9 +405,9 @@ button{ font-family:inherit; cursor:pointer; }
         <a href="about.html" class="btn btn-outline">What is Anuraagam?</a>
       </div>
       <div style="display:flex; gap:40px; margin-top:52px; flex-wrap:wrap;">
-        <div><div class="stat">40+</div><div class="stat-label">Sessions hosted</div></div>
-        <div><div class="stat">120+</div><div class="stat-label">Artists jammed</div></div>
-        <div><div class="stat">6K+</div><div class="stat-label">Audience reached</div></div>
+        <div><div class="stat">1</div><div class="stat-label">Sessions hosted</div></div>
+        <div><div class="stat">4</div><div class="stat-label">Artists jammed</div></div>
+        <div><div class="stat">300+</div><div class="stat-label">Audience reached</div></div>
       </div>
     </div>
     <div class="reveal" style="display:flex; justify-content:center; position:relative;">
@@ -542,8 +542,8 @@ button{ font-family:inherit; cursor:pointer; }
 // The anon key is safe to expose publicly — it only grants what your
 // Row Level Security policies (see supabase/schema.sql) allow.
 
-const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR-ANON-PUBLIC-KEY';
+const SUPABASE_URL = 'https://hhchwsztykktfuzxpsqd.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_QNszIsenmt0tKfbzHQovjg_Gf6rsCTG';
 
 // Guarded: if the CDN script didn't load (network hiccup, ad-blocker, etc.)
 // or the project hasn't been configured yet, pages should degrade gracefully
@@ -702,6 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 (async function () {
   const container = document.querySelector('#next-event-container');
+  const heroBadge = document.querySelector('#hero-next-badge');
 
   if (!supabaseClient) {
     container.innerHTML = `<p style="opacity:.85;">Couldn't connect to load the next session. Please refresh.</p>`;
@@ -719,6 +720,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .limit(1);
 
   if (error || !events || events.length === 0) {
+    heroBadge.style.display = 'none';
     container.innerHTML = `
       <div class="card-paper card" style="text-align:center;">
         <p>No sessions scheduled just yet — check back soon.</p>
@@ -731,6 +733,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const dateLabel = new Date(ev.event_date).toLocaleString('en-IN', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit'
   });
+  const shortDateLabel = new Date(ev.event_date).toLocaleString('en-IN', {
+    day: 'numeric', month: 'short'
+  });
+
+  heroBadge.textContent = `Next session · ${shortDateLabel}`;
+  heroBadge.style.display = 'inline-flex';
 
   container.innerHTML = `
     <div class="ticket reveal">
