@@ -256,7 +256,8 @@ console.log("Booking object:", booking);
   document.getElementById("event-name").textContent = booking.event_name;
 console.log("Event name updated");
   document.getElementById("booking-id").textContent = booking.booking_id;
-  // document.getElementById("ticket-code").textContent = booking.booking_id;
+  
+  document.getElementById("ticket-code").textContent = booking.booking_id;
 
   document.getElementById("attendee-name").textContent =
       booking.attendee_name || "Anuraagam Member";
@@ -273,8 +274,6 @@ console.log("Event name updated");
   document.getElementById("amount").textContent =
       "₹" + booking.total;
 
-  document.getElementById("status").textContent =
-      booking.status.toUpperCase();
 
   new QRCode(document.getElementById("qr"),{
       text: booking.qr_code || booking.booking_id,
