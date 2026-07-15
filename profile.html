@@ -165,16 +165,37 @@
       weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit'
     });
 
-    return `
-      <div class="order-row">
-        <div>
-          <strong>${o.event_name}</strong>
-          <p style="font-size:.85rem; opacity:.7; margin-top:4px;">${dateLabel} · ${o.event_venue}</p>
-          <p style="font-size:.85rem; opacity:.7;">${o.quantity} seat${o.quantity > 1 ? 's' : ''} · ₹${o.total}</p>
-        </div>
-        <span class="status-pill ${statusClass}">${statusLabel}</span>
-      </div>
-    `;
+return `
+<div class="order-row">
+
+<div>
+
+<strong>${o.event_name}</strong>
+
+<p style="font-size:.82rem; margin-top:8px; color:var(--red); font-weight:700;">
+Booking ID: ${o.booking_id || "Generating..."}
+</p>
+
+<p style="font-size:.85rem; opacity:.7; margin-top:6px;">
+${dateLabel} · ${o.event_venue}
+</p>
+
+<p style="font-size:.85rem; opacity:.7;">
+${o.quantity} seat${o.quantity > 1 ? 's' : ''} · ₹${o.total}
+</p>
+
+${o.status === "paid"
+? `<a href="ticket.html?id=${o.booking_id}" class="btn btn-coral" style="margin-top:14px;">View Ticket</a>`
+: ""}
+
+</div>
+
+<span class="status-pill ${statusClass}">
+${statusLabel}
+</span>
+
+</div>
+`;
   }).join('');
 })();
 </script>

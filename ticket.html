@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Ticket | AnuRAAGAM</title>
+
+    <link rel="icon" href="images/logo.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial,Helvetica,sans-serif;
+        }
+
+        body{
+            background:#0f0f0f;
+            color:white;
+        }
+
+        .navbar{
+            height:70px;
+            background:#111;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:0 8%;
+            border-bottom:1px solid rgba(255,255,255,.08);
+        }
+
+        .logo{
+            color:#ff3b3b;
+            font-size:28px;
+            font-weight:bold;
+        }
+
+        .container{
+            max-width:900px;
+            margin:50px auto;
+            padding:20px;
+        }
+
+        .ticket{
+            background:white;
+            color:#111;
+            border-radius:18px;
+            overflow:hidden;
+            display:flex;
+            flex-wrap:wrap;
+            box-shadow:0 25px 50px rgba(0,0,0,.35);
+        }
+
+        .left{
+            flex:2;
+            padding:40px;
+        }
+
+        .right{
+            flex:1;
+            background:#f7f7f7;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            padding:30px;
+        }
+
+        .heading{
+            color:#d62828;
+            font-size:32px;
+            font-weight:bold;
+            margin-bottom:25px;
+        }
+
+        .event{
+            font-size:26px;
+            font-weight:bold;
+            margin-bottom:25px;
+        }
+
+        .row{
+            margin-bottom:18px;
+        }
+
+        .label{
+            font-size:13px;
+            color:#888;
+            text-transform:uppercase;
+        }
+
+        .value{
+            font-size:18px;
+            margin-top:4px;
+            font-weight:600;
+        }
+
+        #qr{
+            width:220px;
+            height:220px;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            margin-bottom:20px;
+        }
+
+        .status{
+            background:#27ae60;
+            color:white;
+            padding:10px 20px;
+            border-radius:25px;
+            font-weight:bold;
+        }
+
+        .actions{
+            margin-top:35px;
+            display:flex;
+            gap:15px;
+            flex-wrap:wrap;
+        }
+
+        button{
+            border:none;
+            padding:14px 22px;
+            border-radius:8px;
+            cursor:pointer;
+            font-size:15px;
+            font-weight:bold;
+        }
+
+        .download{
+            background:#d62828;
+            color:white;
+        }
+
+        .back{
+            background:#222;
+            color:white;
+        }
+
+        footer{
+            text-align:center;
+            padding:40px;
+            color:#aaa;
+        }
+
+        @media(max-width:768px){
+
+            .ticket{
+                flex-direction:column;
+            }
+
+            .left{
+                padding:25px;
+            }
+
+            .right{
+                padding:30px;
+            }
+
+            .heading{
+                font-size:26px;
+            }
+
+            .event{
+                font-size:22px;
+            }
+
+            #qr{
+                width:180px;
+                height:180px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="navbar">
+    <div class="logo">AnuRAAGAM</div>
+</div>
+
+<div class="container">
+
+<div class="ticket">
+
+<div class="left">
+
+<div class="heading">🎫 Event Ticket</div>
+
+<div class="event" id="eventName">
+Loading...
+</div>
+
+<div class="row">
+<div class="label">Booking ID</div>
+<div class="value" id="bookingId">-</div>
+</div>
+
+<div class="row">
+<div class="label">Attendee</div>
+<div class="value" id="attendee">-</div>
+</div>
+
+<div class="row">
+<div class="label">Venue</div>
+<div class="value" id="venue">-</div>
+</div>
+
+<div class="row">
+<div class="label">Date & Time</div>
+<div class="value" id="eventDate">-</div>
+</div>
+
+<div class="row">
+<div class="label">Seats</div>
+<div class="value" id="seats">-</div>
+</div>
+
+<div class="row">
+<div class="label">Amount Paid</div>
+<div class="value" id="amount">-</div>
+</div>
+
+<div class="actions">
+
+<button class="download">
+Download Ticket
+</button>
+
+<button class="back" onclick="history.back()">
+Back
+</button>
+
+</div>
+
+</div>
+
+<div class="right">
+
+<div id="qr"></div>
+
+<div class="status" id="paymentStatus">
+PAID
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<footer>
+
+© 2026 AnuRAAGAM • Hyderabad's Live Music Community
+
+</footer>
+
+</body>
+</html>
