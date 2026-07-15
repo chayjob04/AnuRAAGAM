@@ -13,8 +13,7 @@ module.exports = async (req, res) => {
       return res.status(401).json({ error: "Please login first." });
     }
 
-    const bookingId = req.query.booking_id;
-
+        const bookingId = req.query.id;
     if (!bookingId) {
       return res.status(400).json({ error: "Booking ID missing." });
     }
