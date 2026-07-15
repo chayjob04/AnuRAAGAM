@@ -17,22 +17,6 @@
   .auth-step{ display:none; }
   .auth-step.active{ display:block; }
 
-  .method-toggle{ display:flex; gap:10px; margin-bottom:24px; }
-  .method-btn{
-    flex:1; padding:12px; border-radius:var(--radius-sm); border:3px solid var(--black);
-    background:transparent; font-family:var(--font-body); font-weight:700; font-size:.85rem;
-    display:flex; align-items:center; justify-content:center; gap:8px; transition:all .15s ease;
-  }
-  .method-btn.active{ background:var(--black); color:var(--off-white); }
-
-  .phone-field{ display:flex; gap:0; border:3px solid var(--black); border-radius:var(--radius-sm); overflow:hidden; }
-  .phone-prefix{
-    display:flex; align-items:center; padding:0 14px; background:var(--black); color:var(--off-white);
-    font-weight:700; font-size:.95rem; flex-shrink:0;
-  }
-  .phone-field input{ border:none; border-radius:0; flex:1; }
-  .phone-field input:focus{ outline:none; }
-
   .otp-boxes{ display:flex; gap:8px; justify-content:center; margin:20px 0; }
   .otp-box{
     width:46px; height:56px; text-align:center; font-size:1.4rem; font-weight:700;
@@ -112,21 +96,8 @@
       <div class="auth-step active" id="step-method">
         <h1 style="font-size:1.5rem; margin-bottom:6px;">Log In or Sign Up</h1>
         <p style="font-size:.9rem; opacity:.75; margin-bottom:22px;">New here? Verifying your OTP creates your account automatically — no separate sign up needed.</p>
-
-        <div class="method-toggle">
-          <button type="button" id="tab-mobile" class="method-btn active">📱 Mobile</button>
-          <button type="button" id="tab-email" class="method-btn">✉️ Email</button>
-        </div>
-
         <form id="request-form">
-          <div class="form-field" id="field-mobile">
-            <label for="input-phone">Mobile number</label>
-            <div class="phone-field">
-              <span class="phone-prefix">+91</span>
-              <input type="tel" id="input-phone" inputmode="numeric" maxlength="10" placeholder="98765 43210" autocomplete="tel-national">
-            </div>
-          </div>
-          <div class="form-field" id="field-email" style="display:none;">
+          <div class="form-field" id="field-email">
             <label for="input-email">Email address</label>
             <input type="email" id="input-email" placeholder="you@example.com" autocomplete="email">
           </div>
@@ -215,7 +186,7 @@
       <div>
         <h4>Reach us</h4>
         <p>Hyderabad, Telangana, India</p>
-        <p>hello@anuraagam.in</p>
+        <p>team@anuraagam.com</p>
         <p>+91 8885417989</p>
       </div>
     </div>
@@ -232,16 +203,9 @@
 <script>
 (function () {
   const RESEND_SECONDS = 30;
-
-  let mode = 'mobile'; // 'mobile' | 'email'
   let contact = '';       // raw input value shown to user
   let authIdentifier = ''; // value actually sent to Supabase (e.g. +91XXXXXXXXXX)
   let resendTimer = null;
-
-  const tabMobile = document.querySelector('#tab-mobile');
-  const tabEmail = document.querySelector('#tab-email');
-  const fieldMobile = document.querySelector('#field-mobile');
-  const fieldEmail = document.querySelector('#field-email');
   const requestForm = document.querySelector('#request-form');
   const methodStatus = document.querySelector('#method-status');
   const sendBtn = document.querySelector('#send-otp-btn');
@@ -272,19 +236,6 @@
     el.textContent = msg || '';
     el.className = 'step-status' + (type ? ' ' + type : '');
   }
-
-  function setMode(m) {
-    mode = m;
-    const isMobile = m === 'mobile';
-    tabMobile.classList.toggle('active', isMobile);
-    tabEmail.classList.toggle('active', !isMobile);
-    fieldMobile.style.display = isMobile ? 'block' : 'none';
-    fieldEmail.style.display = isMobile ? 'none' : 'block';
-    setStatus(methodStatus, '', '');
-  }
-  tabMobile.addEventListener('click', () => setMode('mobile'));
-  tabEmail.addEventListener('click', () => setMode('email'));
-
   // ---------------- OTP box behaviour ----------------
   otpBoxes.forEach((box, i) => {
     box.addEventListener('input', () => {
@@ -329,41 +280,26 @@
       setStatus(methodStatus, "Couldn't connect to the login service. Please refresh and try again.", 'error');
       return false;
     }
+    const email = document.querySelector('#input-email').value.trim();
 
-    if (mode === 'mobile') {
-      const digits = document.querySelector('#input-phone').value.trim().replace(/[^0-9]/g, '');
-      if (digits.length !== 10) {
-        setStatus(methodStatus, 'Enter a valid 10-digit mobile number.', 'error');
-        return false;
-      }
-      contact = '+91 ' + digits;
-      authIdentifier = '+91' + digits;
-    } else {
-      const email = document.querySelector('#input-email').value.trim();
-      if (!email || !email.includes('@')) {
-        setStatus(methodStatus, 'Enter a valid email address.', 'error');
-        return false;
-      }
-      contact = email;
-      authIdentifier = email;
-    }
+if (!email || !email.includes('@')) {
+    setStatus(methodStatus, 'Enter a valid email address.', 'error');
+    return false;
+}
 
+contact = email;
+authIdentifier = email;
     setStatus(methodStatus, '', '');
     sendBtn.disabled = true;
     sendBtn.innerHTML = '<span class="spinner"></span>Sending code…';
+try {
 
-    try {
-      const { error } =
-  mode === 'mobile'
-    ? await supabaseClient.auth.signInWithOtp({
-        phone: authIdentifier,
-      })
-    : await supabaseClient.auth.signInWithOtp({
-        email: authIdentifier,
-        options: {
-          shouldCreateUser: true,
-        },
-      });
+const { error } = await supabaseClient.auth.signInWithOtp({
+    email: authIdentifier,
+    options: {
+        shouldCreateUser: true,
+    },
+});
 
 if (error) throw error;
 
@@ -400,9 +336,11 @@ if (error) throw error;
     verifyBtn.innerHTML = '<span class="spinner"></span>Verifying…';
 
     try {
-      const { error } = mode === 'mobile'
-        ? await supabaseClient.auth.verifyOtp({ phone: authIdentifier, token: code, type: 'sms' })
-        : await supabaseClient.auth.verifyOtp({ email: authIdentifier, token: code, type: 'email' });
+     const { error } = await supabaseClient.auth.verifyOtp({
+    email: authIdentifier,
+    token: code,
+    type: 'email'
+});
 
       if (error) throw error;
 
@@ -478,7 +416,6 @@ if (error) throw error;
     if (session) await afterAuthenticated();
   })();
 
-  setMode('mobile');
 })();
 </script>
 </body>
