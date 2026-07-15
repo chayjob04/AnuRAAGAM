@@ -33,17 +33,38 @@ module.exports = async (req, res) => {
       return res.status(401).json({ error: "Invalid session." });
     }
 
-    // Fetch only this user's ticket
-    const { data: order, error } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("booking_id", bookingId)
-      .eq("user_id", user.id)
-      .single();
+console.log("Booking ID from URL:", bookingId);
+console.log("Logged in User ID:", user.id);
 
-    if (error || !order) {
-      return res.status(404).json({ error: "Ticket not found." });
-    }
+const { data: order, error } = await supabase
+  .from("orders")
+  .select("*")
+  .eq("booking_id", bookingId)
+  .single();
+
+console.log("Order:", order);
+console.log("Order Error:", error);
+
+if (order) {
+  console.log("Order User ID:", order.user_id);
+}
+
+if (!order) {
+  return res.status(404).json({
+    error: "Ticket not found.",
+    bookingId,
+    loggedInUser: user.id,
+    dbError: error
+  });
+}
+
+if (order.user_id !== user.id) {
+  return res.status(403).json({
+    error: "This ticket belongs to another user.",
+    orderUser: order.user_id,
+    loggedInUser: user.id
+  });
+}
 
     return res.status(200).json(order);
 
