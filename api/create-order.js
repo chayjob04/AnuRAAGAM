@@ -7,13 +7,7 @@ const Razorpay = require('razorpay');
 const { createClient } = require('@supabase/supabase-js');
 
 module.exports = async (req, res) => {
-  if (req.method === 'GET') {
-  return res.status(200).json({
-    razorpay: !!process.env.RAZORPAY_KEY_ID,
-    supabaseUrl: !!process.env.SUPABASE_URL,
-    supabaseSecret: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-  });
-}
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
