@@ -1,253 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Ticket | AnuRAAGAM</title>
-
-    <link rel="icon" href="images/logo.png">
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-    <style>
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-            font-family:Arial,Helvetica,sans-serif;
-        }
-
-        body{
-            background:#0f0f0f;
-            color:white;
-        }
-
-        .navbar{
-            height:70px;
-            background:#111;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            padding:0 8%;
-            border-bottom:1px solid rgba(255,255,255,.08);
-        }
-
-        .logo{
-            color:#ff3b3b;
-            font-size:28px;
-            font-weight:bold;
-        }
-
-        .container{
-            max-width:900px;
-            margin:50px auto;
-            padding:20px;
-        }
-
-        .ticket{
-            background:white;
-            color:#111;
-            border-radius:18px;
-            overflow:hidden;
-            display:flex;
-            flex-wrap:wrap;
-            box-shadow:0 25px 50px rgba(0,0,0,.35);
-        }
-
-        .left{
-            flex:2;
-            padding:40px;
-        }
-
-        .right{
-            flex:1;
-            background:#f7f7f7;
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            padding:30px;
-        }
-
-        .heading{
-            color:#d62828;
-            font-size:32px;
-            font-weight:bold;
-            margin-bottom:25px;
-        }
-
-        .event{
-            font-size:26px;
-            font-weight:bold;
-            margin-bottom:25px;
-        }
-
-        .row{
-            margin-bottom:18px;
-        }
-
-        .label{
-            font-size:13px;
-            color:#888;
-            text-transform:uppercase;
-        }
-
-        .value{
-            font-size:18px;
-            margin-top:4px;
-            font-weight:600;
-        }
-
-        #qr{
-            width:220px;
-            height:220px;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            margin-bottom:20px;
-        }
-
-        .status{
-            background:#27ae60;
-            color:white;
-            padding:10px 20px;
-            border-radius:25px;
-            font-weight:bold;
-        }
-
-        .actions{
-            margin-top:35px;
-            display:flex;
-            gap:15px;
-            flex-wrap:wrap;
-        }
-
-        button{
-            border:none;
-            padding:14px 22px;
-            border-radius:8px;
-            cursor:pointer;
-            font-size:15px;
-            font-weight:bold;
-        }
-
-        .download{
-            background:#d62828;
-            color:white;
-        }
-
-        .back{
-            background:#222;
-            color:white;
-        }
-
-        footer{
-            text-align:center;
-            padding:40px;
-            color:#aaa;
-        }
-
-        @media(max-width:768px){
-
-            .ticket{
-                flex-direction:column;
-            }
-
-            .left{
-                padding:25px;
-            }
-
-            .right{
-                padding:30px;
-            }
-
-            .heading{
-                font-size:26px;
-            }
-
-            .event{
-                font-size:22px;
-            }
-
-            #qr{
-                width:180px;
-                height:180px;
-            }
-
-        }
-
-    </style>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Ticket — Anuraagam</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+ 
+</style>
 </head>
-
 <body>
+<div class="grain"></div>
 
-<div class="navbar">
-    <div class="logo">AnuRAAGAM</div>
-</div>
+<header class="site-header">
+  <nav class="nav container">
+    <a href="index.html" class="brand"><img src="assets/logo.png" alt="Anuraagam logo"></a>
+    <button class="nav-toggle" aria-label="Toggle menu">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="events.html">Events</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html">Admin</a></li>
+      <li id="nav-auth-slot"><a href="login.html">Login</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="page-hero" style="padding-bottom:24px;">
+  <div class="container">
+    <span class="eyebrow">Your Ticket</span>
+    <h1 style="font-size:clamp(2rem,5vw,3.2rem);">My Ticket</h1>
+  </div>
+</section>
+
+<section class="section section-paper">
 
 <div class="container">
 
 <div class="ticket">
 
-<div class="left">
+<div class="ticket-main">
 
-<div class="heading">🎫 Event Ticket</div>
+<span class="eyebrow" style="color:var(--red)">
+Confirmed Booking
+</span>
 
-<div class="event" id="eventName">
-Loading...
-</div>
+<h2 id="event-name">Loading...</h2>
 
-<div class="row">
-<div class="label">Booking ID</div>
-<div class="value" id="bookingId">-</div>
-</div>
+<br>
 
-<div class="row">
-<div class="label">Attendee</div>
-<div class="value" id="attendee">-</div>
-</div>
+<p><strong>Booking ID</strong></p>
+<p id="booking-id">...</p>
 
-<div class="row">
-<div class="label">Venue</div>
-<div class="value" id="venue">-</div>
-</div>
+<br>
 
-<div class="row">
-<div class="label">Date & Time</div>
-<div class="value" id="eventDate">-</div>
-</div>
+<p><strong>Attendee</strong></p>
+<p id="attendee-name">...</p>
 
-<div class="row">
-<div class="label">Seats</div>
-<div class="value" id="seats">-</div>
-</div>
+<br>
 
-<div class="row">
-<div class="label">Amount Paid</div>
-<div class="value" id="amount">-</div>
-</div>
+<p><strong>Venue</strong></p>
+<p id="venue">...</p>
 
-<div class="actions">
+<br>
 
-<button class="download">
-Download Ticket
+<p><strong>Date & Time</strong></p>
+<p id="event-date">...</p>
+
+<br>
+
+<p><strong>Seats</strong></p>
+<p id="seats">...</p>
+
+<br>
+
+<p><strong>Amount Paid</strong></p>
+<p id="amount">...</p>
+
+<div style="margin-top:30px;display:flex;gap:14px;flex-wrap:wrap;">
+
+<a href="profile.html" class="btn btn-outline">
+← My Orders
+</a>
+
+<button onclick="window.print()" class="btn btn-coral">
+Print Ticket
 </button>
 
-<button class="back" onclick="history.back()">
-Back
-</button>
-
+</div>
 </div>
 
-</div>
-
-<div class="right">
+<div class="ticket-stub">
 
 <div id="qr"></div>
 
-<div class="status" id="paymentStatus">
+<br>
+
+<div id="status">
 PAID
 </div>
 
@@ -257,11 +110,108 @@ PAID
 
 </div>
 
-<footer>
+</section>
 
-© 2026 AnuRAAGAM • Hyderabad's Live Music Community
-
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <img src="assets/logo.png" alt="Anuraagam" style="height:56px; margin-bottom:14px;">
+        <p>Hyderabad's home for live Telugu singing & jamming sessions.</p>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="about.html">About Us</a>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <a href="contact.html">Contact Us</a>
+        <a href="events.html">Buy Tickets</a>
+        <a href="contact.html">Refund Policy</a>
+      </div>
+      <div>
+        <h4>Reach us</h4>
+        <p>Hyderabad, Telangana, India</p>
+        <p>team@anuraagam.com</p>
+        <p>+91 8885417989</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Anuraagam. All rights reserved.</span>
+      <span>More than a song.</span>
+    </div>
+  </div>
 </footer>
 
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+(async () => {
+
+  const user = await requireLogin("ticket.html");
+  if (!user) return;
+
+  const session = await supabaseClient.auth.getSession();
+
+  const token = session.data.session.access_token;
+
+  const params = new URLSearchParams(window.location.search);
+
+  const bookingId = params.get("id");
+
+  if (!bookingId) {
+      alert("Booking ID missing.");
+      return;
+  }
+
+  const response = await fetch(`/api/get-ticket?id=${bookingId}`,{
+      headers:{
+          Authorization:`Bearer ${token}`
+      }
+  });
+
+  const booking = await response.json();
+
+  if(booking.error){
+      alert(booking.error);
+      return;
+  }
+
+  document.getElementById("event-name").textContent = booking.event_name;
+
+  document.getElementById("booking-id").textContent = booking.booking_id;
+
+  document.getElementById("attendee-name").textContent =
+      booking.attendee_name || "Anuraagam Member";
+
+  document.getElementById("venue").textContent =
+      booking.event_venue;
+
+  document.getElementById("event-date").textContent =
+      new Date(booking.event_date).toLocaleString("en-IN");
+
+  document.getElementById("seats").textContent =
+      booking.quantity;
+
+  document.getElementById("amount").textContent =
+      "₹" + booking.total;
+
+  document.getElementById("status").textContent =
+      booking.status.toUpperCase();
+
+  new QRCode(document.getElementById("qr"),{
+      text:booking.booking_id,
+      width:140,
+      height:140
+  });
+
+})();
+</script>
 </body>
 </html>
