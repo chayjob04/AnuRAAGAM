@@ -8,7 +8,61 @@
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
- 
+ .qr-wrapper{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+}
+
+.qr-title{
+    font-family:var(--font-display);
+    font-size:.9rem;
+    letter-spacing:2px;
+    color:var(--paper);
+    text-transform:uppercase;
+}
+
+.qr-card{
+    background:#fff;
+    padding:16px;
+    border-radius:16px;
+    border:3px solid var(--black);
+    box-shadow:6px 6px 0 var(--black);
+}
+
+.qr-card #qr{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.ticket-code{
+    font-weight:700;
+    color:var(--paper);
+    text-align:center;
+    word-break:break-word;
+    font-size:.9rem;
+}
+
+.ticket-valid{
+    display:inline-block;
+    background:#ffffff;
+    color:var(--red);
+    padding:8px 16px;
+    border-radius:999px;
+    font-weight:700;
+    font-size:.8rem;
+    letter-spacing:.5px;
+}
+
+.ticket-note{
+    margin-top:10px;
+    font-size:.75rem;
+    color:rgba(255,255,255,.85);
+    text-align:center;
+    line-height:1.5;
+}
 </style>
 </head>
 <body>
@@ -95,12 +149,29 @@ Print Ticket
 
 <div class="ticket-stub">
 
-<div id="qr"></div>
+<div class="qr-wrapper">
 
-<br>
+<div class="qr-title">
+SCAN AT ENTRY
+</div>
 
-<div id="status">
-PAID
+<div class="qr-card">
+    <div id="qr"></div>
+</div>
+
+<div class="ticket-code" id="ticket-code">
+Loading...
+</div>
+
+<div class="ticket-valid">
+✓ VALID TICKET
+</div>
+
+<div class="ticket-note">
+Present this QR at the entrance.<br>
+Each ticket can be scanned only once.
+</div>
+
 </div>
 
 </div>
@@ -185,6 +256,7 @@ PAID
   document.getElementById("event-name").textContent = booking.event_name;
 
   document.getElementById("booking-id").textContent = booking.booking_id;
+  document.getElementById("ticket-code").textContent = booking.booking_id;
 
   document.getElementById("attendee-name").textContent =
       booking.attendee_name || "Anuraagam Member";
@@ -205,7 +277,7 @@ PAID
       booking.status.toUpperCase();
 
   new QRCode(document.getElementById("qr"),{
-      text:booking.booking_id,
+      text: booking.qr_code || booking.booking_id,
       width:140,
       height:140
   });
