@@ -252,9 +252,9 @@ Each ticket can be scanned only once.
       alert(booking.error);
       return;
   }
-
+console.log("Booking object:", booking);
   document.getElementById("event-name").textContent = booking.event_name;
-
+console.log("Event name updated");
   document.getElementById("booking-id").textContent = booking.booking_id;
   // document.getElementById("ticket-code").textContent = booking.booking_id;
 
