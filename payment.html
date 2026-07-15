@@ -365,12 +365,10 @@ button{ font-family:inherit; cursor:pointer; }
 /* PAYMENT PAGE MOBILE FIX */
 
 #checkout-content{
-    display:grid;
-    grid-template-columns:1.1fr 1fr;
-    gap:40px;
-    align-items:start;
+    display:flex;
+    flex-direction:column;
+    gap:32px;
 }
-
 @media (max-width:900px){
 
     #checkout-content{
