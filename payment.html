@@ -362,7 +362,48 @@ button{ font-family:inherit; cursor:pointer; }
 ::selection{ background: var(--coral); color:var(--off-white); }
 
 :focus-visible{ outline: 3px solid var(--off-white); outline-offset:3px; }
+/* PAYMENT PAGE MOBILE FIX */
 
+#checkout-content{
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    gap:40px;
+    align-items:start;
+}
+
+@media (max-width:900px){
+
+    #checkout-content{
+        grid-template-columns:1fr;
+        gap:24px;
+    }
+
+    #ticket-summary-wrap{
+        order:2;
+    }
+
+    #payment-form{
+        order:1;
+    }
+
+    .container{
+        padding-left:18px;
+        padding-right:18px;
+    }
+
+    .ticket-main{
+        padding:22px;
+    }
+
+    .card{
+        padding:22px;
+    }
+
+    .btn{
+        width:100%;
+    }
+
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -398,7 +439,8 @@ button{ font-family:inherit; cursor:pointer; }
     <p style="opacity:.8;">Loading event details…</p>
   </div>
 
-  <div class="container" id="checkout-content" style="display:none; grid-template-columns: 1.1fr 1fr; gap:40px; align-items:start;">
+  <div class="container" id="checkout-content"
+style="display:none; gap:40px; align-items:start;">
 
     <!-- LEFT: order summary -->
     <div id="ticket-summary-wrap">
