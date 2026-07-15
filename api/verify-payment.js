@@ -36,10 +36,24 @@ module.exports = async (req, res) => {
       return res.status(400).json({ verified: false, error: 'Signature mismatch' });
     }
 
-    const { error: updateErr } = await supabaseAdmin
-      .from('orders')
-      .update({ status: 'paid', razorpay_payment_id })
-      .eq('razorpay_order_id', razorpay_order_id);
+// Generate Booking ID
+const bookingId =
+  "ANU-" +
+  new Date().getFullYear() +
+  "-" +
+  Math.floor(100000 + Math.random() * 900000);
+
+// Update order
+const { error: updateErr } = await supabaseAdmin
+  .from("orders")
+  .update({
+    status: "paid",
+    razorpay_payment_id,
+    booking_id: bookingId,
+    qr_code: bookingId,
+    ticket_status: "valid",
+  })
+  .eq("razorpay_order_id", razorpay_order_id);
 
     if (updateErr) {
       console.error('order update failed:', updateErr);
