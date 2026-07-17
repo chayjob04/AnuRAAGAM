@@ -518,6 +518,7 @@ button{ font-family:inherit; cursor:pointer; }
         <table class="admin-table" style="color:var(--off-white);">
           <thead>
             <tr style="border-bottom-color:var(--off-white);">
+              <th style="color:var(--off-white);">Booking ID</th>
               <th style="color:var(--off-white);">Attendee</th>
               <th style="color:var(--off-white);">Event</th>
               <th style="color:var(--off-white);">Seats</th>
@@ -872,15 +873,32 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    tbody.innerHTML = orders.map(o => `
-      <tr>
-        <td>${o.attendee_name || '—'}<br><span style="font-size:.8rem; opacity:.7;">${o.attendee_email || o.attendee_phone || ''}</span></td>
-        <td>${o.event_name}</td>
-        <td>${o.quantity}</td>
-        <td>₹${o.total}</td>
-        <td style="text-transform:capitalize;">${o.status}</td>
-      </tr>
-    `).join('');
+tbody.innerHTML = orders.map(o => `
+<tr>
+
+<td style="font-family:monospace;font-weight:700;color:var(--coral);">
+${o.booking_id || "—"}
+</td>
+
+<td>
+${o.attendee_name || "—"}<br>
+<span style="font-size:.8rem;opacity:.7;">
+${o.attendee_email || o.attendee_phone || ""}
+</span>
+</td>
+
+<td>${o.event_name}</td>
+
+<td>${o.quantity}</td>
+
+<td>₹${o.total}</td>
+
+<td style="text-transform:capitalize;">
+${o.status}
+</td>
+
+</tr>
+`).join('');
   }
 
   document.querySelector('#preview-map-btn').addEventListener('click', () => {
@@ -925,5 +943,20 @@ document.addEventListener('DOMContentLoaded', () => {
   loadOrders();
 })();
 </script>
+<div id="booking-modal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:650px;">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2>Booking Details</h2>
+
+      <button id="close-booking-modal" class="btn btn-outline">
+        Close
+      </button>
+    </div>
+
+    <div id="booking-details"></div>
+
+  </div>
+</div>
 </body>
 </html>
