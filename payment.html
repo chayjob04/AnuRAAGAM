@@ -783,15 +783,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const feeEl = document.querySelector('#sum-fee');
   const statusEl = document.querySelector('#payment-status');
 
-  function recalc() {
-    const qty = Math.max(1, Math.min(10, parseInt(qtyInput.value || '1', 10)));
+function recalc() {
+    let qty = parseInt(qtyInput.value, 10);
+
+    if (isNaN(qty) || qty < 1) qty = 1;
+    if (qty > 10) qty = 10;
+
     qtyInput.value = qty;
+
     const subtotal = qty * event.price;
     const fee = Math.round(subtotal * 0.02);
+
     feeEl.textContent = '₹' + fee;
     totalEl.textContent = '₹' + (subtotal + fee);
-  }
-  qtyInput.addEventListener('input', recalc);
+}
+  qtyInput.addEventListener('change', recalc);
+qtyInput.addEventListener('blur', recalc);
   recalc();
 
   const form = document.querySelector('#payment-form');
