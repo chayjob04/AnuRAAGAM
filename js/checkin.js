@@ -80,6 +80,7 @@ color:#000;
 
 <p style="color:#000;"><strong>👤 Name:</strong> ${data.attendee_name}</p>
 <p style="color:#000;"><strong>🎫 Booking ID:</strong> ${data.booking_id}</p>
+<p style="color:#000;"><strong>🎟️ Tickets:</strong> ${data.quantity}</p>
 <p style="color:#000;"><strong>📱 Mobile:</strong> ${data.attendee_phone}</p>
 <p style="color:#000;"><strong>📧 Email:</strong> ${data.attendee_email}</p>
 <p style="color:#000;"><strong>🎉 Event:</strong> ${data.event_name}</p>
@@ -98,8 +99,9 @@ color:#000;
         const { error } = await supabaseClient
           .from("orders")
           .update({
-            ticket_status: "checked_in"
-          })
+  ticket_status: "checked_in",
+  checked_in_at: new Date().toISOString()
+})
           .eq("booking_id", bookingId);
 
         if (error) {
@@ -118,7 +120,14 @@ text-align:center;
 
 <h2>✅ CHECK-IN SUCCESSFUL</h2>
 
-<p>${data.attendee_name} has entered the event.</p>
+<p style="color:#000;">
+<strong>${data.attendee_name}</strong> has entered the event.
+</p>
+
+<p style="color:#000;">
+<strong>🕒 Check-In Time:</strong><br>
+${new Date().toLocaleString()}
+</p>
 
 </div>
 `;
