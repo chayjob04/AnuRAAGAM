@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     result.innerHTML = `
-      <p><strong>Name:</strong> ${data.customer_name}</p>
+      <p><strong>Name:</strong> ${data.attendee_name}</p>
       <p><strong>Booking ID:</strong> ${data.booking_id}</p>
       <p><strong>Event:</strong> ${data.event_name}</p>
       <p><strong>Status:</strong> ${data.ticket_status}</p>
