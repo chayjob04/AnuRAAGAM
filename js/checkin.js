@@ -71,24 +71,26 @@ border:2px solid #22c55e;
 border-radius:12px;
 padding:20px;
 margin-top:20px;
+color:#000;
 ">
 
 <h2 style="color:#16a34a;margin:0 0 15px;">
 ✅ VALID TICKET
 </h2>
 
-<p><strong>👤 Name:</strong> ${data.attendee_name}</p>
-<p><strong>🎫 Booking ID:</strong> ${data.booking_id}</p>
-<p><strong>🎉 Event:</strong> ${data.event_name}</p>
-<p><strong>📌 Status:</strong> VALID</p>
+<p style="color:#000;"><strong>👤 Name:</strong> ${data.attendee_name}</p>
+<p style="color:#000;"><strong>🎫 Booking ID:</strong> ${data.booking_id}</p>
+<p style="color:#000;"><strong>📱 Mobile:</strong> ${data.attendee_phone}</p>
+<p style="color:#000;"><strong>📧 Email:</strong> ${data.attendee_email}</p>
+<p style="color:#000;"><strong>🎉 Event:</strong> ${data.event_name}</p>
+<p style="color:#000;"><strong>📌 Status:</strong> VALID</p>
 
 <button id="confirm-checkin" class="btn btn-primary" style="margin-top:15px;">
-Confirm Check-In
+  Confirm Check-In
 </button>
 
 </div>
 `;
-
     document
       .getElementById("confirm-checkin")
       .addEventListener("click", async () => {
