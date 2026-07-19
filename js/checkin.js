@@ -3,8 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("checkin-btn");
   const result = document.getElementById("checkin-result");
   const scanBtn = document.getElementById("scan-qr-btn");
-  const successSound = new Audio("sounds/success.mp3");
-const errorSound = new Audio("sounds/error.mp3");
+
   const qrReaderDiv = document.getElementById("qr-reader");
   const successSound = new Audio("sounds/success.mp3");
 const errorSound = new Audio("sounds/error.mp3");
