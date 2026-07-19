@@ -3,7 +3,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("checkin-btn");
   const result = document.getElementById("checkin-result");
   const scanBtn = document.getElementById("scan-qr-btn");
+  const successSound = new Audio("sounds/success.mp3");
+const errorSound = new Audio("sounds/error.mp3");
   const qrReaderDiv = document.getElementById("qr-reader");
+  const successSound = new Audio("sounds/success.mp3");
+const errorSound = new Audio("sounds/error.mp3");
 
   async function checkTicket() {
     const bookingId = input.value.trim();
@@ -20,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .single();
 
 if (error || !data) {
+    errorSound.play();
   result.innerHTML = `
     <div style="
       background:#ffe5e5;
@@ -36,13 +41,15 @@ if (error || !data) {
 }
 
     if (data.status !== "paid") {
+        errorSound.play();
       result.innerHTML =
         "<p style='color:red'>❌ Payment not completed.</p>";
       return;
     }
 
 if (data.ticket_status === "checked_in") {
-  result.innerHTML = `
+      errorSound.play();
+      result.innerHTML = `
     <div style="
       background:#fff7d6;
       border:2px solid orange;
@@ -59,12 +66,14 @@ if (data.ticket_status === "checked_in") {
 }
 
     if (data.ticket_status === "cancelled") {
+        errorSound.play();
       result.innerHTML =
         "<p style='color:red'>❌ Ticket is cancelled.</p>";
       return;
     }
 
-result.innerHTML = `
+    successSound.play();
+    result.innerHTML = `
 <div style="
 background:#e8fff0;
 border:2px solid #22c55e;
@@ -109,7 +118,8 @@ color:#000;
           return;
         }
 
-result.innerHTML = `
+        successSound.play();
+        result.innerHTML = `
 <div style="
 background:#dcfce7;
 border:2px solid #16a34a;
