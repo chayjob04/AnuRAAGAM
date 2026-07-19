@@ -416,7 +416,34 @@ button{ font-family:inherit; cursor:pointer; }
       <p style="margin-top:12px; opacity:.85;">Create, edit, publish or remove events shown on the Home and Events pages.</p>
     </div>
   </section>
+<section class="section">
+  <div class="container">
+    <span class="eyebrow">Check-In</span>
+    <h2 class="section-title">Ticket Check-In</h2>
 
+    <div class="card" style="padding:20px; margin-top:20px;">
+      <button id="scan-qr-btn" class="btn btn-primary">
+    📷 Scan QR Code
+</button>
+
+<div id="qr-reader" style="width:320px;display:none;margin:20px 0;"></div>
+      <input
+        type="text"
+        id="qr-input"
+        placeholder="Scan or enter Booking ID"
+        style="width:100%;padding:12px;font-size:16px;">
+
+      <button
+        id="checkin-btn"
+        class="btn btn-primary"
+        style="margin-top:15px;">
+        Check In
+      </button>
+
+      <div id="checkin-result" style="margin-top:20px;"></div>
+    </div>
+  </div>
+</section>
   <section class="section" style="padding-top:24px;">
     <div class="container grid-2" style="align-items:start; grid-template-columns:1fr 1.3fr;">
 
@@ -958,5 +985,7 @@ ${o.status}
 
   </div>
 </div>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="js/checkin.js"></script>
 </body>
 </html>
