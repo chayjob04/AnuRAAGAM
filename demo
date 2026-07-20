@@ -1,9 +1,0 @@
- <div class="card" style="margin-top:24px; background:var(--black);">
-            <span class="eyebrow" style="color:var(--coral);">Good to know</span>
-            <ul style="margin-top:14px; display:grid; gap:10px; font-size:.9rem; opacity:.9;">
-              <li>✔ E-ticket sent instantly to your email & phone</li>
-              <li>✔ Show your ticket QR at the venue entry</li>
-              <li>✔ Tickets are non-transferable, refundable up to 48 hrs before</li>
-              <li>✔ Track this booking anytime under <a href="profile.html" style="text-decoration:underline;">My Orders</a></li>
-            </ul>
-          </div>
