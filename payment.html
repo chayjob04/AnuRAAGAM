@@ -496,6 +496,7 @@ style="display:none; gap:40px; align-items:start;">
         </div>
 
 <div style="display:flex;justify-content:space-between;margin-top:22px;font-size:.95rem;opacity:.8;">
+  
     <span>Booking fee (2%)</span>
     <span id="sum-fee">₹0</span>
 </div>
@@ -504,11 +505,48 @@ style="display:none; gap:40px; align-items:start;">
     <span>Total</span>
     <span id="sum-total" style="color:var(--coral);">₹0</span>
 </div>
+<div class="card" style="margin-top:24px;">
 
+    <label style="font-weight:600;">
+        Promo Code
+    </label>
+
+    <div style="display:flex; gap:10px; margin-top:10px;">
+
+        <input
+            type="text"
+            id="promo-code"
+            placeholder="Enter Promo Code"
+            style="flex:1;">
+
+        <button
+            type="button"
+            id="apply-promo"
+            class="btn btn-solid">
+            Apply
+        </button>
+
+    </div>
+
+    <p
+        id="promo-message"
+        style="margin-top:10px;font-size:.9rem;">
+    </p>
+
+</div>
 <button type="submit" class="btn btn-coral" style="width:100%; margin-top:20px;">
     🔒 Pay & Confirm Seat
 </button>
 
+ <div class="card" style="margin-top:24px; background:var(--black);">
+            <span class="eyebrow" style="color:var(--coral);">Good to know</span>
+            <ul style="margin-top:14px; display:grid; gap:10px; font-size:.9rem; opacity:.9;">
+              <li>✔ E-ticket sent instantly to your email & phone</li>
+              <li>✔ Show your ticket QR at the venue entry</li>
+              <li>✔ Tickets are non-transferable, refundable up to 48 hrs before</li>
+              <li>✔ Track this booking anytime under <a href="profile.html" style="text-decoration:underline;">My Orders</a></li>
+            </ul>
+          </div>
 <p id="payment-status" style="text-align:center; margin-top:12px; font-size:.85rem; min-height:1.2em;"></p>
 
 <p style="text-align:center; margin-top:6px; font-size:.8rem; opacity:.65;">
@@ -782,20 +820,59 @@ document.addEventListener('DOMContentLoaded', () => {
   const totalEl = document.querySelector('#sum-total');
   const feeEl = document.querySelector('#sum-fee');
   const statusEl = document.querySelector('#payment-status');
+  let promoDiscount = 0;
+let appliedPromo = "";
 
+const promoInput = document.getElementById("promo-code");
+const promoBtn = document.getElementById("apply-promo");
+const promoMsg = document.getElementById("promo-message");
+
+const validPromoCodes = {
+  AVI50: 50,
+  VASISHT50: 50,
+  EARLY50: 50
+};
+promoBtn.addEventListener("click", () => {
+    const code = promoInput.value.trim().toUpperCase();
+
+    if (validPromoCodes[code]) {
+        appliedPromo = code;
+        promoDiscount = validPromoCodes[code];
+
+        promoMsg.textContent = `✅ ${code} applied! ₹${promoDiscount} discount.`;
+        promoMsg.style.color = "#22c55e";
+    } else {
+        appliedPromo = "";
+        promoDiscount = 0;
+
+        promoMsg.textContent = "❌ Invalid promo code.";
+        promoMsg.style.color = "#ef4444";
+    }
+
+    recalc();
+});
 function recalc() {
     let qty = parseInt(qtyInput.value, 10);
 
-    if (isNaN(qty) || qty < 1) qty = 1;
-    if (qty > 10) qty = 10;
+if (isNaN(qty) || qty < 1) qty = 1;
+if (qty > 10) qty = 10;
 
-    qtyInput.value = qty;
+qtyInput.value = qty;
 
-    const subtotal = qty * event.price;
-    const fee = Math.round(subtotal * 0.02);
+// Ticket price
+const ticketPrice = qty * event.price;
 
-    feeEl.textContent = '₹' + fee;
-    totalEl.textContent = '₹' + (subtotal + fee);
+// Price after promo
+const discountedPrice = ticketPrice - promoDiscount;
+
+// Booking fee on discounted price
+const fee = Math.round(discountedPrice * 0.02);
+
+// Final amount
+const total = discountedPrice + fee;
+
+feeEl.textContent = '₹' + fee;
+totalEl.textContent = '₹' + total;
 }
   qtyInput.addEventListener('change', recalc);
 qtyInput.addEventListener('blur', recalc);
