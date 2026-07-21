@@ -98,7 +98,9 @@ if (code === "ANURAAGAM100") {
       attendee_email: attendeeEmail || null,
       attendee_phone: attendeePhone || null,
       booking_id: bookingId,
-      status: "paid"
+      status: "paid",
+ticket_status: "valid",
+qr_code: bookingId
     })
     .select()
     .single();

@@ -939,7 +939,7 @@ qtyInput.addEventListener('blur', recalc);
       const order = await orderRes.json();
 
 if (order.freeOrder) {
-    window.location.href = `/ticket.html?id=${order.orderId}`;
+    window.location.href = `/ticket.html?id=${order.bookingId}`;
     return;
 }
 
@@ -966,8 +966,12 @@ if (!order.orderId) throw new Error('order-creation-failed');
             });
             const verifyData = await verifyRes.json();
             if (verifyData.verified) {
-              showSuccess('₹' + (order.amount / 100));
-            } else {
+    showSuccess('₹' + (order.amount / 100));
+
+    setTimeout(() => {
+        window.location.href = `/ticket.html?id=${verifyData.bookingId}`;
+    }, 1500);
+} else {
               setStatus('Payment could not be verified. If money was deducted, contact us with payment ID ' + response.razorpay_payment_id + '.', true);
               payBtn.disabled = false;
               payBtn.textContent = originalLabel;

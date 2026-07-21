@@ -59,7 +59,11 @@ const { error: updateErr } = await supabaseAdmin
       console.error('order update failed:', updateErr);
     }
 
-    return res.status(200).json({ verified: true, paymentId: razorpay_payment_id });
+    return res.status(200).json({
+    verified: true,
+    paymentId: razorpay_payment_id,
+    bookingId
+});
   } catch (err) {
     console.error('verify-payment error:', err);
     return res.status(500).json({ verified: false, error: 'Verification failed' });
