@@ -57,10 +57,15 @@ module.exports = async (req, res) => {
 
     const ticketTotal = event.price * quantity;
 
-const validCodes = ["AVI50", "VASISHT50", "EARLY50"];
+const code = (promoCode || "").toUpperCase();
 
-const discount =
-  validCodes.includes((promoCode || "").toUpperCase()) ? 50 : 0;
+let discount = 0;
+
+if (code === "ANURAAGAM100") {
+  discount = ticketTotal; // 100% OFF
+} else if (["AVI50", "VASISHT50", "EARLY50"].includes(code)) {
+  discount = 50; // ₹50 OFF
+}
 
 const subtotal = Math.max(0, ticketTotal - discount);
 
