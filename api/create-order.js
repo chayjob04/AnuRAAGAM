@@ -69,11 +69,48 @@ if (code === "ANURAAGAM100") {
 
 const subtotal = Math.max(0, ticketTotal - discount);
 
-const fee = Math.round(subtotal * 0.02);
+// Always calculate fee on original ticket price
+const fee = Math.round(ticketTotal * 0.02);
 
 const total = subtotal + fee;
 
 const amountPaise = total * 100;
+if (code === "ANURAAGAM100") {
+  const bookingId = `ANU${Date.now()}`;
+
+  const { data: orderData, error: insertErr } = await supabaseAdmin
+    .from("orders")
+    .insert({
+      user_id: user.id,
+      event_id: event.id,
+      event_name: event.name,
+      event_date: event.event_date,
+      event_venue: event.venue,
+      price_per_seat: event.price,
+      quantity,
+      subtotal,
+      discount,
+      promo_code: promoCode ? promoCode.toUpperCase() : null,
+      fee: 0,
+      final_amount: 0,
+      total: 0,
+      attendee_name: attendeeName || null,
+      attendee_email: attendeeEmail || null,
+      attendee_phone: attendeePhone || null,
+      booking_id: bookingId,
+      status: "paid"
+    })
+    .select()
+    .single();
+
+  if (insertErr) throw insertErr;
+
+  return res.status(200).json({
+    freeOrder: true,
+    orderId: orderData.id,
+    bookingId
+  });
+}
 
     const rzp = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,

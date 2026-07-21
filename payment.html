@@ -937,7 +937,13 @@ qtyInput.addEventListener('blur', recalc);
 
       if (!orderRes.ok) throw new Error('order-endpoint-unavailable');
       const order = await orderRes.json();
-      if (!order.orderId) throw new Error('order-creation-failed');
+
+if (order.freeOrder) {
+    window.location.href = `/ticket.html?id=${order.orderId}`;
+    return;
+}
+
+if (!order.orderId) throw new Error('order-creation-failed');
 
       setStatus('');
 
