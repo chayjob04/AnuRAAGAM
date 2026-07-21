@@ -825,26 +825,32 @@ const validPromoCodes = {
   AVI50: 50,
   VASISHT50: 50,
   EARLY50: 50,
-  ANURAAGAM100: 100
+  ANURAAGAM100: "FULL"
 };
+
 promoBtn.addEventListener("click", () => {
-    const code = promoInput.value.trim().toUpperCase();
+  const code = promoInput.value.trim().toUpperCase();
 
-    if (validPromoCodes[code]) {
-        appliedPromo = code;
-        promoDiscount = validPromoCodes[code];
+  if (validPromoCodes[code]) {
+    appliedPromo = code;
 
-        promoMsg.textContent = `✅ ${code} applied! ₹${promoDiscount} discount.`;
-        promoMsg.style.color = "#22c55e";
+    if (code === "ANURAAGAM100") {
+      promoDiscount = qtyInput.value * event.price; // 100% OFF
+      promoMsg.textContent = "✅ ANURAAGAM100 applied! 100% OFF";
     } else {
-        appliedPromo = "";
-        promoDiscount = 0;
-
-        promoMsg.textContent = "❌ Invalid promo code.";
-        promoMsg.style.color = "#ef4444";
+      promoDiscount = validPromoCodes[code];
+      promoMsg.textContent = `✅ ${code} applied! ₹${promoDiscount} discount.`;
     }
 
-    recalc();
+    promoMsg.style.color = "#22c55e";
+  } else {
+    appliedPromo = "";
+    promoDiscount = 0;
+    promoMsg.textContent = "❌ Invalid promo code.";
+    promoMsg.style.color = "#ef4444";
+  }
+
+  recalc();
 });
 function recalc() {
     let qty = parseInt(qtyInput.value, 10);
@@ -858,7 +864,11 @@ qtyInput.value = qty;
 const ticketPrice = qty * event.price;
 
 // Price after promo
-const discountedPrice = ticketPrice - promoDiscount;
+if (appliedPromo === "ANURAAGAM100") {
+  promoDiscount = ticketPrice;
+}
+
+const discountedPrice = Math.max(0, ticketPrice - promoDiscount);
 
 // Booking fee on discounted price
 const fee = Math.round(discountedPrice * 0.02);
