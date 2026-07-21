@@ -513,6 +513,10 @@ style="display:none; gap:40px; align-items:start;">
     </p>
 
 </div>
+<div style="display:flex;justify-content:space-between;margin-top:18px;font-size:.95rem;opacity:.8;">
+    <span>Promo Discount</span>
+    <span id="sum-discount">-₹0</span>
+</div>
 <div style="display:flex;justify-content:space-between;margin-top:22px;font-size:.95rem;opacity:.8;">
   
     <span>Booking fee (2%)</span>
@@ -861,8 +865,10 @@ const fee = Math.round(discountedPrice * 0.02);
 // Final amount
 const total = discountedPrice + fee;
 
-feeEl.textContent = '₹' + fee;
-totalEl.textContent = '₹' + total;
+// Update summary
+document.getElementById("sum-discount").textContent = "-₹" + promoDiscount;
+feeEl.textContent = "₹" + fee;
+totalEl.textContent = "₹" + total;
 }
   qtyInput.addEventListener('change', recalc);
 qtyInput.addEventListener('blur', recalc);
@@ -908,7 +914,14 @@ qtyInput.addEventListener('blur', recalc);
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + session.access_token
         },
-        body: JSON.stringify({ eventId, qty, attendeeName, attendeeEmail, attendeePhone })
+        body: JSON.stringify({
+  eventId,
+  qty,
+  attendeeName,
+  attendeeEmail,
+  attendeePhone,
+  promoCode
+})
       });
 
       if (!orderRes.ok) throw new Error('order-endpoint-unavailable');

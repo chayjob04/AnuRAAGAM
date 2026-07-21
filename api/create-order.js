@@ -34,7 +34,14 @@ module.exports = async (req, res) => {
     }
     const user = userData.user;
 
-    const { eventId, qty, attendeeName, attendeeEmail, attendeePhone } = req.body || {};
+    const {
+  eventId,
+  qty,
+  attendeeName,
+  attendeeEmail,
+  attendeePhone,
+  promoCode
+} = req.body || {};
     const quantity = Math.max(1, Math.min(10, parseInt(qty, 10) || 1));
 
     const { data: event, error: eventErr } = await supabaseAdmin
@@ -48,10 +55,20 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'This event is no longer available.' });
     }
 
-    const subtotal = event.price * quantity;
-    const fee = Math.round(subtotal * 0.02);
-    const total = subtotal + fee;
-    const amountPaise = total * 100;
+    const ticketTotal = event.price * quantity;
+
+const validCodes = ["AVI50", "VASISHT50", "EARLY50"];
+
+const discount =
+  validCodes.includes((promoCode || "").toUpperCase()) ? 50 : 0;
+
+const subtotal = Math.max(0, ticketTotal - discount);
+
+const fee = Math.round(subtotal * 0.02);
+
+const total = subtotal + fee;
+
+const amountPaise = total * 100;
 
     const rzp = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
@@ -75,8 +92,11 @@ module.exports = async (req, res) => {
       price_per_seat: event.price,
       quantity,
       subtotal,
-      fee,
-      total,
+discount,
+promo_code: promoCode ? promoCode.toUpperCase() : null,
+fee,
+final_amount: total,
+total,
       attendee_name: attendeeName || null,
       attendee_email: attendeeEmail || null,
       attendee_phone: attendeePhone || null,
