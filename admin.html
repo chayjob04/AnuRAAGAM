@@ -536,8 +536,83 @@ button{ font-family:inherit; cursor:pointer; }
 
     </div>
   </section>
+<!-- ================= BOOKING ANALYTICS ================= -->
+<section class="section section-paper" id="booking-analytics">
+  <div class="container">
 
+    <span class="eyebrow" style="color:var(--red);">Analytics</span>
+
+    <h2 class="section-title" style="margin-top:10px;">
+      Booking Dashboard
+    </h2>
+
+    <p style="margin-top:10px; opacity:.7;">
+      Live booking and revenue overview.
+    </p>
+
+    <!-- STAT CARDS -->
+    <div class="grid-3" style="margin-top:35px;">
+
+      <div class="card card-paper">
+        <div class="stat" id="stat-tickets">—</div>
+        <div class="stat-label">Tickets Sold</div>
+      </div>
+
+      <div class="card card-paper">
+        <div class="stat" id="stat-revenue">—</div>
+        <div class="stat-label">Revenue</div>
+      </div>
+
+      <div class="card card-paper">
+        <div class="stat" id="stat-orders">—</div>
+        <div class="stat-label">Paid Orders</div>
+      </div>
+
+      <div class="card card-paper">
+        <div class="stat" id="stat-checkins">—</div>
+        <div class="stat-label">Checked In</div>
+      </div>
+
+      <div class="card card-paper">
+        <div class="stat" id="stat-discounts">—</div>
+        <div class="stat-label">Discount Given</div>
+      </div>
+
+      <div class="card card-paper">
+        <div class="stat" id="stat-average">—</div>
+        <div class="stat-label">Average Order</div>
+      </div>
+
+    </div>
+
+    <!-- CHART AREA -->
+    <div class="grid-2" style="margin-top:45px; align-items:stretch;">
+
+      <div class="card card-paper">
+        <h3>Sales Over Time</h3>
+
+        <div style="height:320px; margin-top:20px;">
+          <canvas id="salesChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card card-paper">
+        <h3>Promo Code Usage</h3>
+
+        <div style="height:320px; margin-top:20px;">
+          <canvas id="promoChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+<!-- ================= END BOOKING ANALYTICS ================= -->
   <section class="section section-dark" style="padding-top:10px;">
+    <div class="container">
+  <span class="eyebrow">Bookings</span>
+  <h2 class="section-title" style="color:var(--off-white); margin-top:10px;">Recent Orders</h2>
     <div class="container">
       <span class="eyebrow">Bookings</span>
       <h2 class="section-title" style="color:var(--off-white); margin-top:10px;">Recent Orders</h2>
