@@ -1062,5 +1062,140 @@ ${o.status}
 </div>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="js/checkin.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+async function loadBookingAnalytics() {
+  try {
+    const { data: orders, error } = await supabaseClient
+      .from('orders')
+      .select('quantity, final_amount, discount, promo_code, status, checked_in, created_at')
+      .eq('status', 'paid')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Analytics orders error:', error);
+      return;
+    }
+
+    const paidOrders = orders || [];
+
+    // =========================
+    // TOTALS
+    // =========================
+
+    const totalTickets = paidOrders.reduce(
+      (sum, order) => sum + Number(order.quantity || 0),
+      0
+    );
+
+    const totalRevenue = paidOrders.reduce(
+      (sum, order) => sum + Number(order.final_amount || 0),
+      0
+    );
+
+    const totalDiscount = paidOrders.reduce(
+      (sum, order) => sum + Number(order.discount || 0),
+      0
+    );
+
+    const averageOrder = paidOrders.length
+      ? totalRevenue / paidOrders.length
+      : 0;
+
+    const checkedIn = paidOrders.reduce(
+      (sum, order) =>
+        sum + (order.checked_in ? Number(order.quantity || 0) : 0),
+      0
+    );
+
+    // =========================
+    // UPDATE CARDS
+    // =========================
+
+    document.querySelector('#stat-tickets').textContent =
+      totalTickets.toLocaleString('en-IN');
+
+    document.querySelector('#stat-revenue').textContent =
+      '₹' + totalRevenue.toLocaleString('en-IN');
+
+    document.querySelector('#stat-orders').textContent =
+      paidOrders.length.toLocaleString('en-IN');
+
+    document.querySelector('#stat-checkins').textContent =
+      checkedIn.toLocaleString('en-IN');
+
+    document.querySelector('#stat-discounts').textContent =
+      '₹' + totalDiscount.toLocaleString('en-IN');
+
+    document.querySelector('#stat-average').textContent =
+      '₹' + Math.round(averageOrder).toLocaleString('en-IN');
+
+    // =========================
+    // SALES BY DATE
+    // =========================
+
+    const salesByDate = {};
+
+    paidOrders.forEach(order => {
+      const date = new Date(order.created_at).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short'
+      });
+
+      salesByDate[date] =
+        (salesByDate[date] || 0) + Number(order.quantity || 0);
+    });
+
+    new Chart(document.querySelector('#salesChart'), {
+      type: 'bar',
+      data: {
+        labels: Object.keys(salesByDate),
+        datasets: [{
+          label: 'Tickets Sold',
+          data: Object.values(salesByDate)
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+
+    // =========================
+    // PROMO USAGE
+    // =========================
+
+    const promoUsage = {};
+
+    paidOrders.forEach(order => {
+      const promo = order.promo_code
+        ? order.promo_code.toUpperCase()
+        : 'NO PROMO';
+
+      promoUsage[promo] =
+        (promoUsage[promo] || 0) + Number(order.quantity || 0);
+    });
+
+    new Chart(document.querySelector('#promoChart'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(promoUsage),
+        datasets: [{
+          data: Object.values(promoUsage)
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+
+  } catch (err) {
+    console.error('Booking analytics failed:', err);
+  }
+}
+
+loadBookingAnalytics();
+</script>
 </body>
 </html>
