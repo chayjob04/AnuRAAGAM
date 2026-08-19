@@ -503,6 +503,25 @@ button{ font-family:inherit; cursor:pointer; }
             <input type="number" id="ev-price" min="0" required placeholder="499">
           </div>
           <div class="form-field">
+  <label for="ev-promo-code">Promo code</label>
+  <input
+    type="text"
+    id="ev-promo-code"
+    placeholder="EARLYBIRD"
+    style="text-transform:uppercase;"
+  >
+</div>
+
+<div class="form-field">
+  <label for="ev-promo-discount">Promo discount (₹)</label>
+  <input
+    type="number"
+    id="ev-promo-discount"
+    min="0"
+    placeholder="150"
+  >
+</div>
+          <div class="form-field">
             <label for="ev-desc">Description</label>
             <textarea id="ev-desc" rows="3" placeholder="Short description shown on the events page"></textarea>
           </div>
@@ -931,6 +950,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#ev-ampm').value = ampm;
         document.querySelector('#ev-venue').value = ev.venue;
         document.querySelector('#ev-price').value = ev.price;
+       document.querySelector('#ev-promo-code').value = ev.promo_code || '';
+document.querySelector('#ev-promo-discount').value = ev.promo_discount || 0;document.querySelector('#ev-promo-code').value = ev.promo_code || '';
+document.querySelector('#ev-promo-discount').value = ev.promo_discount || 0;
         document.querySelector('#ev-desc').value = ev.description || '';
         document.querySelector('#ev-published').checked = ev.is_published;
         formTitle.textContent = 'Edit Event';
@@ -1013,14 +1035,18 @@ ${o.status}
 
     const id = document.querySelector('#event-id').value;
     const payload = {
-      name: document.querySelector('#ev-name').value.trim(),
-      tagline: document.querySelector('#ev-tagline').value,
-      event_date: combineDateTimeFields(),
-      venue: document.querySelector('#ev-venue').value.trim(),
-      price: parseInt(document.querySelector('#ev-price').value, 10),
-      description: document.querySelector('#ev-desc').value.trim(),
-      is_published: document.querySelector('#ev-published').checked
-    };
+  name: document.querySelector('#ev-name').value.trim(),
+  tagline: document.querySelector('#ev-tagline').value,
+  event_date: combineDateTimeFields(),
+  venue: document.querySelector('#ev-venue').value.trim(),
+  price: parseInt(document.querySelector('#ev-price').value, 10),
+
+  promo_code: document.querySelector('#ev-promo-code').value.trim().toUpperCase(),
+  promo_discount: parseInt(document.querySelector('#ev-promo-discount').value, 10) || 0,
+
+  description: document.querySelector('#ev-desc').value.trim(),
+  is_published: document.querySelector('#ev-published').checked
+};
 
     const query = id
       ? supabaseClient.from('events').update(payload).eq('id', id)
