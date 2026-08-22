@@ -502,24 +502,19 @@ button{ font-family:inherit; cursor:pointer; }
             <label for="ev-price">Price per seat (₹)</label>
             <input type="number" id="ev-price" min="0" required placeholder="499">
           </div>
-          <div class="form-field">
-  <label for="ev-promo-code">Promo code</label>
-  <input
-    type="text"
-    id="ev-promo-code"
-    placeholder="EARLYBIRD"
-    style="text-transform:uppercase;"
-  >
-</div>
+         <div class="form-field">
+  <label>Promo Codes</label>
 
-<div class="form-field">
-  <label for="ev-promo-discount">Promo discount (₹)</label>
-  <input
-    type="number"
-    id="ev-promo-discount"
-    min="0"
-    placeholder="150"
+  <div id="promo-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+  <button
+    type="button"
+    id="add-promo-btn"
+    class="btn btn-outline"
+    style="margin-top:10px; color:var(--black); border-color:var(--black);"
   >
+    + Add Promo Code
+  </button>
 </div>
           <div class="form-field">
             <label for="ev-desc">Description</label>
@@ -866,13 +861,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelBtn = document.querySelector('#cancel-edit');
   const formTitle = document.querySelector('#form-title');
 
-  function resetForm() {
-    form.reset();
-    document.querySelector('#event-id').value = '';
-    formTitle.textContent = 'New Event';
-    cancelBtn.style.display = 'none';
-    statusEl.textContent = '';
-  }
+function resetForm() {
+  form.reset();
+
+  document.querySelector('#event-id').value = '';
+
+  document.querySelector('#promo-list').innerHTML = '';
+
+  formTitle.textContent = 'New Event';
+
+  cancelBtn.style.display = 'none';
+
+  statusEl.textContent = '';
+}
 
   function toDateAndTimeFields(isoString) {
     const d = new Date(isoString);
@@ -899,7 +900,97 @@ document.addEventListener('DOMContentLoaded', () => {
     const dt = new Date(y, m - 1, d, hour24, minute, 0);
     return dt.toISOString();
   }
+function addPromoRow(code = '', discount = '', type = 'fixed') {
+  const list = document.querySelector('#promo-list');
 
+  const row = document.createElement('div');
+
+  row.className = 'promo-row';
+
+  row.style.cssText = `
+    display:grid;
+    grid-template-columns:1fr 120px 120px auto;
+    gap:10px;
+    align-items:center;
+  `;
+
+  row.innerHTML = `
+    <input
+      type="text"
+      class="promo-code-input"
+      placeholder="EARLY50"
+      value="${code}"
+      style="text-transform:uppercase;"
+    >
+
+    <select
+      class="promo-type-input"
+      style="height:42px;"
+    >
+      <option value="fixed" ${type === 'fixed' ? 'selected' : ''}>₹ Fixed</option>
+      <option value="percentage" ${type === 'percentage' ? 'selected' : ''}>% Percent</option>
+    </select>
+
+    <input
+      type="number"
+      class="promo-discount-input"
+      placeholder="50"
+      min="0"
+      value="${discount}"
+    >
+
+    <button
+      type="button"
+      class="btn btn-outline remove-promo-btn"
+      style="color:var(--red); border-color:var(--red);"
+    >
+      Remove
+    </button>
+  `;
+
+  row.querySelector('.remove-promo-btn').addEventListener('click', () => {
+    row.remove();
+  });
+
+  list.appendChild(row);
+}
+
+function getPromoCodesFromForm() {
+  const rows = document.querySelectorAll('.promo-row');
+
+  const promos = [];
+
+  rows.forEach(row => {
+    const code = row
+      .querySelector('.promo-code-input')
+      .value
+      .trim()
+      .toUpperCase();
+
+    const discount = parseInt(
+      row.querySelector('.promo-discount-input').value,
+      10
+    ) || 0;
+
+    const type = row
+      .querySelector('.promo-type-input')
+      .value;
+
+    if (code && discount > 0) {
+      promos.push({
+        code,
+        discount,
+        type
+      });
+    }
+  });
+
+  return promos;
+}
+
+document.querySelector('#add-promo-btn').addEventListener('click', () => {
+  addPromoRow();
+});
   async function loadEvents() {
     const tbody = document.querySelector('#events-tbody');
     const { data: events, error } = await supabaseClient
@@ -950,9 +1041,19 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#ev-ampm').value = ampm;
         document.querySelector('#ev-venue').value = ev.venue;
         document.querySelector('#ev-price').value = ev.price;
-       document.querySelector('#ev-promo-code').value = ev.promo_code || '';
-document.querySelector('#ev-promo-discount').value = ev.promo_discount || 0;document.querySelector('#ev-promo-code').value = ev.promo_code || '';
-document.querySelector('#ev-promo-discount').value = ev.promo_discount || 0;
+       document.querySelector('#promo-list').innerHTML = '';
+
+const promos = Array.isArray(ev.promo_codes)
+  ? ev.promo_codes
+  : [];
+
+promos.forEach(promo => {
+  addPromoRow(
+    promo.code || '',
+    promo.discount || 0,
+    promo.type || 'fixed'
+  );
+});
         document.querySelector('#ev-desc').value = ev.description || '';
         document.querySelector('#ev-published').checked = ev.is_published;
         formTitle.textContent = 'Edit Event';
@@ -977,7 +1078,6 @@ document.querySelector('#ev-promo-discount').value = ev.promo_discount || 0;
       });
     });
   }
-
   async function loadOrders() {
     const tbody = document.querySelector('#orders-tbody');
     const { data: orders, error } = await supabaseClient
@@ -1041,8 +1141,7 @@ ${o.status}
   venue: document.querySelector('#ev-venue').value.trim(),
   price: parseInt(document.querySelector('#ev-price').value, 10),
 
-  promo_code: document.querySelector('#ev-promo-code').value.trim().toUpperCase(),
-  promo_discount: parseInt(document.querySelector('#ev-promo-discount').value, 10) || 0,
+promo_codes: getPromoCodesFromForm(),
 
   description: document.querySelector('#ev-desc').value.trim(),
   is_published: document.querySelector('#ev-published').checked

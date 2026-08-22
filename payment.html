@@ -823,28 +823,40 @@ const promoMsg = document.getElementById("promo-message");
 
 const validPromoCodes = {};
 
-if (event.promo_code) {
-  validPromoCodes[event.promo_code.toUpperCase()] = event.promo_discount;
+if (Array.isArray(event.promo_codes)) {
+  event.promo_codes.forEach(promo => {
+    if (promo.code) {
+      validPromoCodes[promo.code.trim().toUpperCase()] = {
+        discount: Number(promo.discount) || 0
+      };
+    }
+  });
 }
 
 promoBtn.addEventListener("click", () => {
   const code = promoInput.value.trim().toUpperCase();
 
-  if (Object.prototype.hasOwnProperty.call(validPromoCodes, code)) {
+  if (validPromoCodes[code]) {
     appliedPromo = code;
 
-    if (code === "ANURAAGAM100") {
-      promoDiscount = qtyInput.value * event.price; // 100% OFF
-      promoMsg.textContent = "✅ ANURAAGAM100 applied! 100% OFF";
-    } else {
-      promoDiscount = validPromoCodes[code];
-      promoMsg.textContent = `✅ ${code} applied! ₹${promoDiscount} discount.`;
-    }
+    const discountPerTicket = Number(validPromoCodes[code].discount) || 0;
+    const quantity = Number(qtyInput.value) || 1;
+
+    // Discount applies to EACH ticket
+    promoDiscount = Math.min(
+      discountPerTicket * quantity,
+      quantity * event.price
+    );
+
+    promoMsg.textContent =
+      `✅ ${code} applied! ₹${discountPerTicket} OFF per ticket.`;
 
     promoMsg.style.color = "#22c55e";
+
   } else {
     appliedPromo = "";
     promoDiscount = 0;
+
     promoMsg.textContent = "❌ Invalid promo code.";
     promoMsg.style.color = "#ef4444";
   }
@@ -852,41 +864,53 @@ promoBtn.addEventListener("click", () => {
   recalc();
 });
 function recalc() {
-    let qty = parseInt(qtyInput.value, 10);
+  let qty = parseInt(qtyInput.value, 10);
 
-if (isNaN(qty) || qty < 1) qty = 1;
-if (qty > 10) qty = 10;
+  if (isNaN(qty) || qty < 1) qty = 1;
+  if (qty > 10) qty = 10;
 
-qtyInput.value = qty;
+  qtyInput.value = qty;
 
-// Ticket price
-const ticketPrice = qty * event.price;
+  // Original ticket price for all tickets
+  const ticketPrice = qty * event.price;
 
-// Price after promo
-if (appliedPromo === "ANURAAGAM100") {
-  promoDiscount = ticketPrice;
+  // Total promo discount
+  const discountedPrice = Math.max(
+    0,
+    ticketPrice - promoDiscount
+  );
+
+  // Booking fee after promo discount
+  const fee = Math.round(discountedPrice * 0.02);
+
+  // Final amount
+  const total = discountedPrice + fee;
+
+  // Update discount
+  document.getElementById("sum-discount").textContent =
+    "-₹" + promoDiscount;
+
+  // Update ticket price display
+  const priceElement = document.getElementById("sum-price");
+
+  if (appliedPromo && validPromoCodes[appliedPromo]) {
+    const discountPerTicket =
+      Number(validPromoCodes[appliedPromo].discount) || 0;
+
+    const discountedPerTicket =
+      Math.max(0, event.price - discountPerTicket);
+
+    priceElement.innerHTML =
+      `<s>₹${event.price}</s> <strong>₹${discountedPerTicket}</strong> × ${qty}`;
+  } else {
+    priceElement.textContent =
+      `₹${event.price} × ${qty}`;
+  }
+
+  feeEl.textContent = "₹" + fee;
+
+  totalEl.textContent = "₹" + total;
 }
-
-const discountedPrice = Math.max(0, ticketPrice - promoDiscount);
-
-// Booking fee on discounted price
-const fee = Math.round(discountedPrice * 0.02);
-
-// Final amount
-const total = discountedPrice + fee;
-
-// Update summary
-document.getElementById("sum-discount").textContent = "-₹" + promoDiscount;
-feeEl.textContent = "₹" + fee;
-totalEl.textContent = "₹" + total;
-}
-  qtyInput.addEventListener('change', recalc);
-qtyInput.addEventListener('blur', recalc);
-  recalc();
-
-  const form = document.querySelector('#payment-form');
-  const successBox = document.querySelector('#payment-success');
-
   function showSuccess(paidTotalLabel) {
     form.style.display = 'none';
     document.querySelector('#ticket-summary-wrap').style.display = 'none';

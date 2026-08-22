@@ -55,65 +55,115 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'This event is no longer available.' });
     }
 
-    const ticketTotal = event.price * quantity;
+const ticketTotal = event.price * quantity;
 
-const code = (promoCode || "").toUpperCase();
+const code = (promoCode || "").trim().toUpperCase();
 
 let discount = 0;
 
-if (code === "ANURAAGAM100") {
-  discount = ticketTotal; // 100% OFF
-} else if (["AVI50", "VASISHT50", "EARLY50"].includes(code)) {
-  discount = 50; // ₹50 OFF
+// Promo codes belonging ONLY to this event
+const promoCodes = Array.isArray(event.promo_codes)
+  ? event.promo_codes
+  : [];
+
+// Find the promo code entered by the customer
+const matchedPromo = promoCodes.find(
+  promo =>
+    String(promo.code || "").trim().toUpperCase() === code
+);
+
+// If customer entered a code but it doesn't belong to this event
+if (code && !matchedPromo) {
+  return res.status(400).json({
+    error: "Invalid promo code for this event."
+  });
+}
+
+if (matchedPromo) {
+  const discountType = String(
+    matchedPromo.type || "fixed"
+  ).toLowerCase();
+
+  const discountValue = Number(matchedPromo.discount) || 0;
+
+if (discountType === "percentage") {
+  // Percentage discount applies to EACH ticket
+  discount = Math.round(
+    event.price * (discountValue / 100)
+  ) * quantity;
+} else {
+  // Fixed discount applies to EACH ticket
+  discount = discountValue * quantity;
+}
+
+// Never allow discount above total ticket price
+discount = Math.min(discount, ticketTotal);
+
+  // Discount can never exceed ticket total
+  discount = Math.min(discount, ticketTotal);
 }
 
 const subtotal = Math.max(0, ticketTotal - discount);
 
-// Always calculate fee on original ticket price
-const fee = Math.round(ticketTotal * 0.02);
+// 2% booking fee AFTER discount
+const fee = Math.round(subtotal * 0.02);
 
 const total = subtotal + fee;
 
-const amountPaise = total * 100;
-if (code === "ANURAAGAM100") {
+const amountPaise = Math.round(total * 100);
+// Handle 100% discount promo codes
+if (total === 0) {
   const bookingId = `ANU${Date.now()}`;
 
-  const { data: orderData, error: insertErr } = await supabaseAdmin
-    .from("orders")
-    .insert({
-      user_id: user.id,
-      event_id: event.id,
-      event_name: event.name,
-      event_date: event.event_date,
-      event_venue: event.venue,
-      price_per_seat: event.price,
-      quantity,
-      subtotal,
-      discount,
-      promo_code: promoCode ? promoCode.toUpperCase() : null,
-      fee: 0,
-      final_amount: 0,
-      total: 0,
-      attendee_name: attendeeName || null,
-      attendee_email: attendeeEmail || null,
-      attendee_phone: attendeePhone || null,
-      booking_id: bookingId,
-      status: "paid",
-ticket_status: "valid",
-qr_code: bookingId
-    })
-    .select()
-    .single();
+  const { data: freeOrder, error: freeOrderErr } =
+    await supabaseAdmin
+      .from('orders')
+      .insert({
+        user_id: user.id,
+        event_id: event.id,
+        event_name: event.name,
+        event_date: event.event_date,
+        event_venue: event.venue,
+        price_per_seat: event.price,
+        quantity,
+        subtotal,
+        discount,
+        promo_code: promoCode ? promoCode.toUpperCase() : null,
+        fee: 0,
+        final_amount: 0,
+        total: 0,
+        attendee_name: attendeeName || null,
+        attendee_email: attendeeEmail || null,
+        attendee_phone: attendeePhone || null,
+        booking_id: bookingId,
+        status: 'paid',
+        ticket_status: 'valid',
+        qr_code: bookingId
+      })
+      .select()
+      .single();
 
-  if (insertErr) throw insertErr;
+  if (freeOrderErr) {
+    console.error('free order insert failed:', freeOrderErr);
+    return res.status(500).json({
+      error: 'Unable to create free booking'
+    });
+  }
 
   return res.status(200).json({
     freeOrder: true,
-    orderId: orderData.id,
-    bookingId
+    orderId: freeOrder.id,
+    bookingId,
+    breakdown: {
+      pricePerSeat: event.price,
+      quantity,
+      subtotal,
+      discount,
+      fee: 0,
+      total: 0
+    }
   });
 }
-
     const rzp = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
