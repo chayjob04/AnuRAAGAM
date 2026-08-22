@@ -1103,10 +1103,15 @@ ${o.booking_id || "—"}
 </td>
 
 <td>
-${o.attendee_name || "—"}<br>
-<span style="font-size:.8rem;opacity:.7;">
-${o.attendee_email || o.attendee_phone || ""}
-</span>
+  <strong>${o.attendee_name || "—"}</strong><br>
+
+  <span style="font-size:.8rem;opacity:.7;">
+    📧 ${o.attendee_email || "—"}
+  </span><br>
+
+  <span style="font-size:.8rem;opacity:.7;">
+    📱 ${o.attendee_phone || "—"}
+  </span>
 </td>
 
 <td>${o.event_name}</td>
