@@ -566,6 +566,10 @@ button{ font-family:inherit; cursor:pointer; }
 
     <!-- STAT CARDS -->
     <div class="grid-3" style="margin-top:35px;">
+      <div class="card card-paper">
+  <div class="stat" id="stat-events">—</div>
+  <div class="stat-label">Events Listed</div>
+</div>
 
       <div class="card card-paper">
         <div class="stat" id="stat-tickets">—</div>
@@ -598,7 +602,28 @@ button{ font-family:inherit; cursor:pointer; }
       </div>
 
     </div>
+<!-- EVENT-WISE TICKET SALES -->
+<div class="card card-paper" style="margin-top:30px;">
+  <h3>Tickets Sold Per Event</h3>
 
+  <div style="overflow-x:auto; margin-top:20px;">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Event</th>
+          <th>Date</th>
+          <th>Tickets Sold</th>
+        </tr>
+      </thead>
+
+      <tbody id="event-sales-tbody">
+        <tr>
+          <td colspan="3">Loading…</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
     <!-- CHART AREA -->
     <div class="grid-2" style="margin-top:45px; align-items:stretch;">
 
@@ -1194,9 +1219,30 @@ promo_codes: getPromoCodesFromForm(),
 <script>
 async function loadBookingAnalytics() {
   try {
+    // Get all published/listed events
+    const { data: events, error: eventsError } = await supabaseClient
+      .from('events')
+      .select('id, name, event_date')
+      .order('event_date', { ascending: true });
+
+    if (eventsError) {
+      console.error('Analytics events error:', eventsError);
+      return;
+    }
+
+    // Get paid orders
     const { data: orders, error } = await supabaseClient
       .from('orders')
-      .select('quantity, final_amount, discount, promo_code, status, checked_in, created_at')
+      .select(`
+        event_id,
+        quantity,
+        final_amount,
+        discount,
+        promo_code,
+        status,
+        checked_in,
+        created_at
+      `)
       .eq('status', 'paid')
       .order('created_at', { ascending: true });
 
@@ -1206,6 +1252,7 @@ async function loadBookingAnalytics() {
     }
 
     const paidOrders = orders || [];
+    const listedEvents = events || [];
 
     // =========================
     // TOTALS
@@ -1243,6 +1290,9 @@ async function loadBookingAnalytics() {
     document.querySelector('#stat-tickets').textContent =
       totalTickets.toLocaleString('en-IN');
 
+      document.querySelector('#stat-events').textContent =
+  listedEvents.length.toLocaleString('en-IN');
+  
     document.querySelector('#stat-revenue').textContent =
       '₹' + totalRevenue.toLocaleString('en-IN');
 
@@ -1258,6 +1308,77 @@ async function loadBookingAnalytics() {
     document.querySelector('#stat-average').textContent =
       '₹' + Math.round(averageOrder).toLocaleString('en-IN');
 
+
+    // =========================
+    // EVENT-WISE TICKET SALES
+    // =========================
+
+    const ticketsByEvent = {};
+
+    // Start every listed event at 0
+    listedEvents.forEach(event => {
+      ticketsByEvent[event.id] = 0;
+    });
+
+    // Add tickets to the correct event
+    paidOrders.forEach(order => {
+      if (order.event_id) {
+        ticketsByEvent[order.event_id] =
+          (ticketsByEvent[order.event_id] || 0) +
+          Number(order.quantity || 0);
+      }
+    });
+
+    const eventSalesTbody =
+      document.querySelector('#event-sales-tbody');
+
+    if (eventSalesTbody) {
+
+      if (listedEvents.length === 0) {
+
+        eventSalesTbody.innerHTML = `
+          <tr>
+            <td colspan="3">No events listed.</td>
+          </tr>
+        `;
+
+      } else {
+
+        eventSalesTbody.innerHTML = listedEvents.map(event => {
+
+          const dateLabel = new Date(event.event_date)
+            .toLocaleString('en-IN', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            });
+
+          const ticketsSold =
+            ticketsByEvent[event.id] || 0;
+
+          return `
+            <tr>
+              <td>
+                <strong>${event.name}</strong>
+              </td>
+
+              <td>
+                ${dateLabel}
+              </td>
+
+              <td>
+                <strong>
+                  ${ticketsSold.toLocaleString('en-IN')}
+                </strong>
+              </td>
+            </tr>
+          `;
+
+        }).join('');
+      }
+    }
+
+
     // =========================
     // SALES BY DATE
     // =========================
@@ -1265,29 +1386,36 @@ async function loadBookingAnalytics() {
     const salesByDate = {};
 
     paidOrders.forEach(order => {
-      const date = new Date(order.created_at).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short'
-      });
+
+      const date = new Date(order.created_at)
+        .toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short'
+        });
 
       salesByDate[date] =
-        (salesByDate[date] || 0) + Number(order.quantity || 0);
+        (salesByDate[date] || 0) +
+        Number(order.quantity || 0);
     });
 
     new Chart(document.querySelector('#salesChart'), {
       type: 'bar',
+
       data: {
         labels: Object.keys(salesByDate),
+
         datasets: [{
           label: 'Tickets Sold',
           data: Object.values(salesByDate)
         }]
       },
+
       options: {
         responsive: true,
         maintainAspectRatio: false
       }
     });
+
 
     // =========================
     // PROMO USAGE
@@ -1296,22 +1424,27 @@ async function loadBookingAnalytics() {
     const promoUsage = {};
 
     paidOrders.forEach(order => {
+
       const promo = order.promo_code
         ? order.promo_code.toUpperCase()
         : 'NO PROMO';
 
       promoUsage[promo] =
-        (promoUsage[promo] || 0) + Number(order.quantity || 0);
+        (promoUsage[promo] || 0) +
+        Number(order.quantity || 0);
     });
 
     new Chart(document.querySelector('#promoChart'), {
       type: 'doughnut',
+
       data: {
         labels: Object.keys(promoUsage),
+
         datasets: [{
           data: Object.values(promoUsage)
         }]
       },
+
       options: {
         responsive: true,
         maintainAspectRatio: false
@@ -1319,7 +1452,12 @@ async function loadBookingAnalytics() {
     });
 
   } catch (err) {
-    console.error('Booking analytics failed:', err);
+
+    console.error(
+      'Booking analytics failed:',
+      err
+    );
+
   }
 }
 
