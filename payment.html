@@ -826,7 +826,6 @@ const validPromoCodes = {};
 if (event.promo_code) {
   validPromoCodes[event.promo_code.toUpperCase()] = event.promo_discount;
 }
-};
 
 promoBtn.addEventListener("click", () => {
   const code = promoInput.value.trim().toUpperCase();
