@@ -874,6 +874,11 @@ function recalc() {
   // Original ticket price for all tickets
   const ticketPrice = qty * event.price;
 
+  if (appliedPromo && validPromoCodes[appliedPromo]) {
+    const discountPerTicket = Number(validPromoCodes[appliedPromo].discount) || 0;
+    promoDiscount = Math.min(discountPerTicket * qty, qty * event.price);
+  }
+
   // Total promo discount
   const discountedPrice = Math.max(
     0,
@@ -911,6 +916,10 @@ function recalc() {
 
   totalEl.textContent = "₹" + total;
 }
+
+  qtyInput.addEventListener('input', recalc);
+  recalc();
+
   function showSuccess(paidTotalLabel) {
     form.style.display = 'none';
     document.querySelector('#ticket-summary-wrap').style.display = 'none';
