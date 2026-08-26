@@ -952,93 +952,160 @@ function recalc() {
       if (!session) throw new Error('not-logged-in');
 
       const orderRes = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + session.access_token
-        },
-        body: JSON.stringify({
-  eventId,
-  qty,
-  attendeeName,
-  attendeeEmail,
-  attendeePhone,
-  promoCode: appliedPromo
-})
-      });
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + session.access_token
+  },
+  body: JSON.stringify({
+    eventId,
+    qty,
+    attendeeName,
+    attendeeEmail,
+    attendeePhone,
+    promoCode: appliedPromo
+  })
+});
 
-      if (!orderRes.ok) throw new Error('order-endpoint-unavailable');
-      const order = await orderRes.json();
+const order = await orderRes.json();
 
-if (order.freeOrder) {
-    window.location.href = `/ticket.html?id=${order.bookingId}`;
-    return;
+if (!orderRes.ok) {
+  throw new Error(order.error || 'Unable to create Razorpay order.');
 }
 
-if (!order.orderId) throw new Error('order-creation-failed');
+console.log('Razorpay order created:', order);
 
-      setStatus('');
+if (order.freeOrder) {
+  window.location.href = `/ticket.html?id=${order.bookingId}`;
+  return;
+}
 
-      const options = {
-        key: order.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Anuraagam',
-        description: event.name,
-        order_id: order.orderId,
-        prefill: { name: attendeeName, email: attendeeEmail, contact: attendeePhone },
-        theme: { color: '#E31C1C' },
-        handler: async function (response) {
-          setStatus('Verifying payment…');
-          try {
-            const verifyRes = await fetch('/api/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(response)
-            });
-            const verifyData = await verifyRes.json();
-            if (verifyData.verified) {
-    showSuccess('₹' + (order.amount / 100));
+if (!order.orderId) {
+  throw new Error('Razorpay order ID was not returned.');
+}
 
-    setTimeout(() => {
-        window.location.href = `/ticket.html?id=${verifyData.bookingId}`;
-    }, 1500);
-} else {
-              setStatus('Payment could not be verified. If money was deducted, contact us with payment ID ' + response.razorpay_payment_id + '.', true);
-              payBtn.disabled = false;
-              payBtn.textContent = originalLabel;
-            }
-          } catch (err) {
-            setStatus('Verification failed. If money was deducted, contact us with payment ID ' + response.razorpay_payment_id + '.', true);
-            payBtn.disabled = false;
-            payBtn.textContent = originalLabel;
-          }
+if (!order.keyId) {
+  throw new Error('Razorpay key ID was not returned.');
+}
+
+setStatus('');
+
+const options = {
+  key: order.keyId,
+  amount: order.amount,
+  currency: order.currency,
+  name: 'Anuraagam',
+  description: event.name,
+  order_id: order.orderId,
+
+  prefill: {
+    name: attendeeName,
+    email: attendeeEmail,
+    contact: attendeePhone
+  },
+
+  theme: {
+    color: '#E31C1C'
+  },
+
+  handler: async function (response) {
+
+    setStatus('Verifying payment…');
+
+    try {
+
+      const verifyRes = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
         },
-        modal: {
-          ondismiss: function () {
-            payBtn.disabled = false;
-            payBtn.textContent = originalLabel;
-            setStatus('');
-          }
-        }
-      };
+        body: JSON.stringify(response)
+      });
 
-      if (typeof Razorpay === 'undefined') throw new Error('razorpay-sdk-not-loaded');
-      const rzp = new Razorpay(options);
-      rzp.on('payment.failed', function () {
-        setStatus('Payment failed. Please try again.', true);
+      const verifyData = await verifyRes.json();
+
+      if (verifyData.verified) {
+
+        showSuccess('₹' + (order.amount / 100));
+
+        setTimeout(() => {
+          window.location.href =
+            `/ticket.html?id=${verifyData.bookingId}`;
+        }, 1500);
+
+      } else {
+
+        setStatus(
+          'Payment could not be verified. If money was deducted, contact us with payment ID ' +
+          response.razorpay_payment_id + '.',
+          true
+        );
+
         payBtn.disabled = false;
         payBtn.textContent = originalLabel;
-      });
-      rzp.open();
-      payBtn.disabled = false;
-      payBtn.textContent = originalLabel;
+      }
 
     } catch (err) {
-      console.warn('Live payment unavailable, using demo checkout:', err);
-      setStatus('Demo mode: live payment gateway isn\'t connected yet, so this booking wasn\'t saved to your account.', false);
-      setTimeout(() => showSuccess(), 600);
+
+      console.error('Verification error:', err);
+
+      setStatus(
+        'Verification failed. If money was deducted, contact us with payment ID ' +
+        response.razorpay_payment_id + '.',
+        true
+      );
+
+      payBtn.disabled = false;
+      payBtn.textContent = originalLabel;
     }
+  },
+
+  modal: {
+    ondismiss: function () {
+      payBtn.disabled = false;
+      payBtn.textContent = originalLabel;
+      setStatus('');
+    }
+  }
+};
+
+if (typeof Razorpay === 'undefined') {
+  throw new Error('Razorpay SDK did not load.');
+}
+
+const rzp = new Razorpay(options);
+
+rzp.on('payment.failed', function (response) {
+
+  console.error('Razorpay payment failed:', response);
+
+  setStatus(
+    'Payment failed. Please try again.',
+    true
+  );
+
+  payBtn.disabled = false;
+  payBtn.textContent = originalLabel;
+});
+
+rzp.open();
+
+payBtn.disabled = false;
+payBtn.textContent = originalLabel;
+
+} catch (err) {
+
+  console.error('PAYMENT ERROR:', err);
+
+  setStatus(
+    'Payment could not be started: ' +
+    (err.message || 'Please try again.'),
+    true
+  );
+
+  payBtn.disabled = false;
+  payBtn.textContent = originalLabel;
+}
   });
 })();
 </script>
