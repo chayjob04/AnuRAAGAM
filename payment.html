@@ -474,12 +474,11 @@ style="display:none; gap:40px; align-items:start;">
               <div class="form-field" style="margin-top:18px; max-width:160px;">
                 <label for="qty">Seats</label>
                 <input
-    type="number"
-    id="qty"
-    min="1"
-    max="10"
-    value="1"
-    onfocus="this.select()">
+  type="number"
+  id="qty"
+  min="1"
+  placeholder="Enter number of tickets"
+  autocomplete="off">
               </div>
             </div>
           </div>
@@ -866,10 +865,10 @@ promoBtn.addEventListener("click", () => {
 function recalc() {
   let qty = parseInt(qtyInput.value, 10);
 
-  if (isNaN(qty) || qty < 1) qty = 1;
-  if (qty > 10) qty = 10;
-
-  qtyInput.value = qty;
+ if (isNaN(qty) || qty < 1) {
+  qtyInput.value = '';
+  return;
+}
 
   // Original ticket price for all tickets
   const ticketPrice = qty * event.price;
@@ -930,11 +929,17 @@ function recalc() {
   }
 
   function setStatus(msg, isError) {
-    statusEl.textContent = msg || '';
-    statusEl.style.color = isError ? '#ffb4a3' : 'inherit';
-  }
+  statusEl.textContent = msg || '';
+  statusEl.style.color = isError ? '#ffb4a3' : 'inherit';
+}
 
-  form.addEventListener('submit', async (e) => {
+const form = document.querySelector('#payment-form');
+
+if (!form) {
+  throw new Error('Payment form not found.');
+}
+
+form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payBtn = form.querySelector('button[type="submit"]');
     const originalLabel = payBtn.textContent;
@@ -942,7 +947,11 @@ function recalc() {
     payBtn.textContent = 'Processing…';
     setStatus('Contacting payment gateway…');
 
-    const qty = Math.max(1, Math.min(10, parseInt(qtyInput.value || '1', 10)));
+    const qty = parseInt(qtyInput.value, 10);
+
+if (!Number.isInteger(qty) || qty < 1) {
+  throw new Error('Please enter the number of tickets.');
+}
     const attendeeName = document.querySelector('#name').value;
     const attendeeEmail = document.querySelector('#email').value;
     const attendeePhone = document.querySelector('#phone').value;
