@@ -879,6 +879,12 @@ let appliedPromo = "";
 
 const promoInput = document.getElementById("promo-code");
 const promoBtn = document.getElementById("apply-promo");
+promoInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    promoBtn.click();
+  }
+});
 const promoMsg = document.getElementById("promo-message");
 
 const validPromoCodes = {};
