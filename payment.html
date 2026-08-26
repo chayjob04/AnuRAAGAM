@@ -473,12 +473,36 @@ style="display:none; gap:40px; align-items:start;">
 
               <div class="form-field" style="margin-top:18px; max-width:160px;">
                 <label for="qty">Seats</label>
-                <input
-  type="number"
-  id="qty"
-  min="1"
-  placeholder="Enter number of tickets"
-  autocomplete="off">
+                <div style="display:flex; align-items:center; gap:8px; max-width:260px;">
+
+  <button
+    type="button"
+    id="qty-minus"
+    class="btn btn-outline"
+    style="width:46px; height:46px; padding:0; font-size:1.4rem; color:var(--black); border-color:var(--black);"
+  >
+    −
+  </button>
+
+  <input
+    type="number"
+    id="qty"
+    min="1"
+    placeholder="Enter number of tickets"
+    autocomplete="off"
+    style="text-align:center; flex:1;"
+  >
+
+  <button
+    type="button"
+    id="qty-plus"
+    class="btn btn-outline"
+    style="width:46px; height:46px; padding:0; font-size:1.4rem; color:var(--black); border-color:var(--black);"
+  >
+    +
+  </button>
+
+</div>
               </div>
             </div>
           </div>
@@ -810,6 +834,32 @@ document.addEventListener('DOMContentLoaded', () => {
   if (profile && profile.phone) document.querySelector('#phone').value = profile.phone;
 
   const qtyInput = document.querySelector('#qty');
+  const qtyMinus = document.querySelector('#qty-minus');
+const qtyPlus = document.querySelector('#qty-plus');
+
+qtyMinus.addEventListener('click', () => {
+  let qty = parseInt(qtyInput.value, 10);
+
+  if (isNaN(qty) || qty <= 1) {
+    qtyInput.value = 1;
+  } else {
+    qtyInput.value = qty - 1;
+  }
+
+  recalc();
+});
+
+qtyPlus.addEventListener('click', () => {
+  let qty = parseInt(qtyInput.value, 10);
+
+  if (isNaN(qty) || qty < 1) {
+    qtyInput.value = 1;
+  } else {
+    qtyInput.value = qty + 1;
+  }
+
+  recalc();
+});
   const totalEl = document.querySelector('#sum-total');
   const feeEl = document.querySelector('#sum-fee');
   const statusEl = document.querySelector('#payment-status');
@@ -917,6 +967,8 @@ function recalc() {
 }
 
   qtyInput.addEventListener('input', recalc);
+  qtyInput.addEventListener('change', recalc);
+qtyInput.addEventListener('blur', recalc);
   recalc();
 
   function showSuccess(paidTotalLabel) {
