@@ -280,10 +280,10 @@ document.getElementById("ticket-code").textContent =
     booking.attendee_name || "Anuraagam Member";
 
   document.getElementById("email").textContent =
-    booking.email || "-";
+    booking.attendee_email || "-";
 
 document.getElementById("mobile").textContent =
-    booking.mobile || "-";
+    booking.attendee_phone || "-";
 
 document.getElementById("booking-time").textContent =
     new Date(booking.created_at).toLocaleString("en-IN");
