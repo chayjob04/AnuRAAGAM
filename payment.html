@@ -901,31 +901,48 @@ if (Array.isArray(event.promo_codes)) {
 
 promoBtn.addEventListener("click", () => {
   const code = promoInput.value.trim().toUpperCase();
+  const quantity = parseInt(qtyInput.value, 10) || 0;
 
-  if (validPromoCodes[code]) {
-    appliedPromo = code;
-
-    const discountPerTicket = Number(validPromoCodes[code].discount) || 0;
-    const quantity = Number(qtyInput.value) || 1;
-
-    // Discount applies to EACH ticket
-    promoDiscount = Math.min(
-      discountPerTicket * quantity,
-      quantity * event.price
-    );
-
-    promoMsg.textContent =
-      `✅ ${code} applied! ₹${discountPerTicket} OFF per ticket.`;
-
-    promoMsg.style.color = "#22c55e";
-
-  } else {
+  if (!validPromoCodes[code]) {
     appliedPromo = "";
     promoDiscount = 0;
 
     promoMsg.textContent = "❌ Invalid promo code.";
     promoMsg.style.color = "#ef4444";
+
+    recalc();
+    return;
   }
+
+  const promo = validPromoCodes[code];
+  const minQty = Number(promo.minQty) || 1;
+
+  if (quantity < minQty) {
+    appliedPromo = "";
+    promoDiscount = 0;
+
+    promoMsg.textContent =
+      `❌ This promo requires at least ${minQty} tickets.`;
+
+    promoMsg.style.color = "#ef4444";
+
+    recalc();
+    return;
+  }
+
+  appliedPromo = code;
+
+  // Discount is PER TICKET
+  promoDiscount =
+    Math.min(
+      Number(promo.discount) || 0,
+      event.price
+    ) * quantity;
+
+  promoMsg.textContent =
+    `✅ ${code} applied! ₹${promoDiscount} discount.`;
+
+  promoMsg.style.color = "#22c55e";
 
   recalc();
 });

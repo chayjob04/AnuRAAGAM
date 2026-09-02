@@ -80,26 +80,30 @@ if (code && !matchedPromo) {
 }
 
 if (matchedPromo) {
+  const minQty = Number(matchedPromo.minQty) || 1;
+
+  // Promo only works when minimum ticket quantity is reached
+  if (quantity < minQty) {
+    return res.status(400).json({
+      error: `This promo code requires at least ${minQty} tickets.`
+    });
+  }
+
   const discountType = String(
     matchedPromo.type || "fixed"
   ).toLowerCase();
 
   const discountValue = Number(matchedPromo.discount) || 0;
 
-if (discountType === "percentage") {
-  // Percentage discount applies to EACH ticket
-  discount = Math.round(
-    event.price * (discountValue / 100)
-  ) * quantity;
-} else {
-  // Fixed discount applies to EACH ticket
-  discount = discountValue * quantity;
-}
+  if (discountType === "percentage") {
+    discount = Math.round(
+      ticketTotal * (discountValue / 100)
+    );
+  } else {
+    // Fixed discount PER TICKET
+    discount = discountValue * quantity;
+  }
 
-// Never allow discount above total ticket price
-discount = Math.min(discount, ticketTotal);
-
-  // Discount can never exceed ticket total
   discount = Math.min(discount, ticketTotal);
 }
 

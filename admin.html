@@ -925,7 +925,7 @@ function resetForm() {
     const dt = new Date(y, m - 1, d, hour24, minute, 0);
     return dt.toISOString();
   }
-function addPromoRow(code = '', discount = '', type = 'fixed') {
+function addPromoRow(code = '', discount = '', minQty = 1) {
   const list = document.querySelector('#promo-list');
 
   const row = document.createElement('div');
@@ -934,44 +934,44 @@ function addPromoRow(code = '', discount = '', type = 'fixed') {
 
   row.style.cssText = `
     display:grid;
-    grid-template-columns:1fr 120px 120px auto;
+   grid-template-columns:1fr 140px 140px auto;
     gap:10px;
     align-items:center;
   `;
 
   row.innerHTML = `
-    <input
-      type="text"
-      class="promo-code-input"
-      placeholder="EARLY50"
-      value="${code}"
-      style="text-transform:uppercase;"
-    >
+  <input 
+    type="text" 
+    class="promo-code-input" 
+    placeholder="SUPER" 
+    value="${code}"
+    style="text-transform:uppercase;"
+  >
 
-    <select
-      class="promo-type-input"
-      style="height:42px;"
-    >
-      <option value="fixed" ${type === 'fixed' ? 'selected' : ''}>₹ Fixed</option>
-      <option value="percentage" ${type === 'percentage' ? 'selected' : ''}>% Percent</option>
-    </select>
+  <input 
+    type="number" 
+    class="promo-discount-input" 
+    placeholder="100"
+    min="0"
+    value="${discount}"
+  >
 
-    <input
-      type="number"
-      class="promo-discount-input"
-      placeholder="50"
-      min="0"
-      value="${discount}"
-    >
+  <input 
+    type="number" 
+    class="promo-min-qty-input" 
+    placeholder="Min tickets"
+    min="1"
+    value="${minQty || 1}"
+  >
 
-    <button
-      type="button"
-      class="btn btn-outline remove-promo-btn"
-      style="color:var(--red); border-color:var(--red);"
-    >
-      Remove
-    </button>
-  `;
+  <button 
+    type="button" 
+    class="btn btn-outline remove-promo-btn"
+    style="color:var(--red); border-color:var(--red);"
+  >
+    Remove
+  </button>
+`;
 
   row.querySelector('.remove-promo-btn').addEventListener('click', () => {
     row.remove();
@@ -982,7 +982,6 @@ function addPromoRow(code = '', discount = '', type = 'fixed') {
 
 function getPromoCodesFromForm() {
   const rows = document.querySelectorAll('.promo-row');
-
   const promos = [];
 
   rows.forEach(row => {
@@ -997,15 +996,16 @@ function getPromoCodesFromForm() {
       10
     ) || 0;
 
-    const type = row
-      .querySelector('.promo-type-input')
-      .value;
+    const minQty = parseInt(
+      row.querySelector('.promo-min-qty-input').value,
+      10
+    ) || 1;
 
-    if (code && discount > 0) {
+    if (code && discount >= 0) {
       promos.push({
         code,
         discount,
-        type
+        minQty
       });
     }
   });
@@ -1074,10 +1074,10 @@ const promos = Array.isArray(ev.promo_codes)
 
 promos.forEach(promo => {
   addPromoRow(
-    promo.code || '',
-    promo.discount || 0,
-    promo.type || 'fixed'
-  );
+  promo.code || '',
+  promo.discount || 0,
+  promo.minQty || 1
+);
 });
         document.querySelector('#ev-desc').value = ev.description || '';
         document.querySelector('#ev-published').checked = ev.is_published;
