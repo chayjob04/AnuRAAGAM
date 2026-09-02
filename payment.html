@@ -893,8 +893,9 @@ if (Array.isArray(event.promo_codes)) {
   event.promo_codes.forEach(promo => {
     if (promo.code) {
       validPromoCodes[promo.code.trim().toUpperCase()] = {
-        discount: Number(promo.discount) || 0
-      };
+  discount: Number(promo.discount) || 0,
+  minQty: Number(promo.minQty) || 1
+};
     }
   });
 }
@@ -915,6 +916,7 @@ promoBtn.addEventListener("click", () => {
   }
 
   const promo = validPromoCodes[code];
+
   const minQty = Number(promo.minQty) || 1;
 
   if (quantity < minQty) {
@@ -957,10 +959,27 @@ function recalc() {
   // Original ticket price for all tickets
   const ticketPrice = qty * event.price;
 
-  if (appliedPromo && validPromoCodes[appliedPromo]) {
-    const discountPerTicket = Number(validPromoCodes[appliedPromo].discount) || 0;
-    promoDiscount = Math.min(discountPerTicket * qty, qty * event.price);
+ if (appliedPromo && validPromoCodes[appliedPromo]) {
+  const promo = validPromoCodes[appliedPromo];
+  const minQty = Number(promo.minQty) || 1;
+
+  if (qty < minQty) {
+    appliedPromo = "";
+    promoDiscount = 0;
+
+    promoMsg.textContent =
+      `❌ This promo requires at least ${minQty} tickets.`;
+
+    promoMsg.style.color = "#ef4444";
+  } else {
+    const discountPerTicket = Number(promo.discount) || 0;
+
+    promoDiscount = Math.min(
+      discountPerTicket * qty,
+      qty * event.price
+    );
   }
+}
 
   // Total promo discount
   const discountedPrice = Math.max(
