@@ -541,10 +541,28 @@ style="display:none; gap:40px; align-items:start;">
 
     </div>
 
-    <p
-        id="promo-message"
-        style="margin-top:10px;font-size:.9rem;">
-    </p>
+    <p id="promo-message"></p>
+
+<div id="college-id-section" style="display:none; margin-top:18px;">
+
+  <label for="college-id-upload" style="font-weight:700;">
+    College ID Card
+  </label>
+
+  <p style="font-size:.85rem; opacity:.7; margin:6px 0 10px;">
+    Upload your valid college ID card for verification.
+  </p>
+
+  <input
+    type="file"
+    id="college-id-upload"
+    accept="image/*,.pdf"
+  >
+
+  <p
+    id="college-id-message"
+    style="font-size:.85rem; margin-top:8px;"
+  ></p>
 
 </div>
 <div style="display:flex;justify-content:space-between;margin-top:18px;font-size:.95rem;opacity:.8;">
@@ -886,7 +904,14 @@ promoInput.addEventListener("keydown", (e) => {
   }
 });
 const promoMsg = document.getElementById("promo-message");
+const collegeIdSection =
+  document.getElementById("college-id-section");
 
+const collegeIdUpload =
+  document.getElementById("college-id-upload");
+
+const collegeIdMessage =
+  document.getElementById("college-id-message");
 const validPromoCodes = {};
 
 if (Array.isArray(event.promo_codes)) {
@@ -932,14 +957,23 @@ promoBtn.addEventListener("click", () => {
     return;
   }
 
-  appliedPromo = code;
+appliedPromo = code;
 
-  // Discount is PER TICKET
-  promoDiscount =
-    Math.min(
-      Number(promo.discount) || 0,
-      event.price
-    ) * quantity;
+// Show College ID upload for MALLAREDDY
+if (code === "MALLAREDDY") {
+  collegeIdSection.style.display = "block";
+} else {
+  collegeIdSection.style.display = "none";
+  collegeIdUpload.value = "";
+  collegeIdMessage.textContent = "";
+}
+
+// Discount is PER TICKET
+promoDiscount =
+  Math.min(
+    Number(promo.discount) || 0,
+    event.price
+  ) * quantity;
 
   promoMsg.textContent =
     `✅ ${code} applied! ₹${promoDiscount} discount.`;
@@ -963,12 +997,16 @@ function recalc() {
   const promo = validPromoCodes[appliedPromo];
   const minQty = Number(promo.minQty) || 1;
 
-  if (qty < minQty) {
-    appliedPromo = "";
-    promoDiscount = 0;
+if (qty < minQty) {
+  appliedPromo = "";
+  promoDiscount = 0;
 
-    promoMsg.textContent =
-      `❌ This promo requires at least ${minQty} tickets.`;
+  collegeIdSection.style.display = "none";
+  collegeIdUpload.value = "";
+  collegeIdMessage.textContent = "";
+
+  promoMsg.textContent =
+    `❌ This promo requires at least ${minQty} tickets.`;
 
     promoMsg.style.color = "#ef4444";
   } else {
@@ -1046,6 +1084,18 @@ if (!form) {
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (
+  appliedPromo === "MALLAREDDY" &&
+  !collegeIdUpload.files.length
+) {
+  collegeIdMessage.textContent =
+    "❌ Please upload your college ID card before booking.";
+
+  collegeIdMessage.style.color = "#ef4444";
+
+  collegeIdUpload.focus();
+  return;
+}
     const payBtn = form.querySelector('button[type="submit"]');
     const originalLabel = payBtn.textContent;
     payBtn.disabled = true;
@@ -1065,20 +1115,52 @@ if (!Number.isInteger(qty) || qty < 1) {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) throw new Error('not-logged-in');
 
+      let collegeIdPath = null;
+
+      if (appliedPromo === "MALLAREDDY") {
+        const file = collegeIdUpload.files[0];
+
+        if (!file) {
+          throw new Error("Please upload your college ID card.");
+        }
+
+        const fileExt =
+          file.name.split(".").pop().toLowerCase();
+
+        const filePath =
+          `${session.user.id}/${Date.now()}_${crypto.randomUUID()}.${fileExt}`;
+
+        const { error: uploadError } =
+          await supabaseClient.storage
+            .from("college-ids")
+            .upload(filePath, file, {
+              cacheControl: "3600",
+              upsert: false
+            });
+
+        if (uploadError) {
+          console.error("College ID upload error:", uploadError);
+          throw new Error("Could not upload your college ID.");
+        }
+
+        collegeIdPath = filePath;
+      }
+
       const orderRes = await fetch('/api/create-order', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer ' + session.access_token
   },
-  body: JSON.stringify({
-    eventId,
-    qty,
-    attendeeName,
-    attendeeEmail,
-    attendeePhone,
-    promoCode: appliedPromo
-  })
+      body: JSON.stringify({
+      eventId,
+      qty,
+      attendeeName,
+      attendeeEmail,
+      attendeePhone,
+      promoCode: appliedPromo,
+      collegeIdPath
+    })
 });
 
 const order = await orderRes.json();

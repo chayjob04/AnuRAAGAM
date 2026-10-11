@@ -40,7 +40,8 @@ module.exports = async (req, res) => {
   attendeeName,
   attendeeEmail,
   attendeePhone,
-  promoCode
+  promoCode,
+  collegeIdPath
 } = req.body || {};
     const quantity = Math.max(1, Math.min(10, parseInt(qty, 10) || 1));
 
@@ -58,6 +59,13 @@ module.exports = async (req, res) => {
 const ticketTotal = event.price * quantity;
 
 const code = (promoCode || "").trim().toUpperCase();
+const isCollegeFreePass = code === "MALLAREDDY";
+
+if (isCollegeFreePass && !collegeIdPath) {
+  return res.status(400).json({
+    error: "College ID is required for this free pass."
+  });
+}
 
 let discount = 0;
 
