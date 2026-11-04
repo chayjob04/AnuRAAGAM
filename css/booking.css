@@ -1,6 +1,6 @@
 /* Booking flow: event cards, event page, ticket categories */
 .ev-card{padding:0;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-hard-sm)}
-.ev-card .poster{display:block;aspect-ratio:16/9;background:var(--black);border-bottom:3px solid var(--black);overflow:hidden}
+.ev-card .poster{display:block;aspect-ratio:1/1;background:var(--black);border-bottom:3px solid var(--black);overflow:hidden}
 .ev-card .poster img,.poster-lg img{width:100%;height:100%;object-fit:cover}
 .ev-card .poster img.ph,.poster-lg img.ph{object-fit:contain;padding:18% 30%;opacity:.9}
 .ev-card .body{padding:20px;display:flex;flex-direction:column;gap:4px;flex:1}
@@ -9,7 +9,7 @@
 .ev-card .from{margin:10px 0 14px;font-weight:700}
 .ev-card .btn{margin-top:auto;text-align:center;justify-content:center}
 .back-link{display:inline-block;margin-bottom:16px;font-weight:700;color:var(--off-white);text-decoration:underline}
-.poster-lg{aspect-ratio:16/9;background:var(--black);border:3px solid var(--black);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-hard)}
+.poster-lg{aspect-ratio:1/1;max-width:520px;margin:0 auto;background:var(--black);border:3px solid var(--black);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-hard)}
 .ev-title{font-family:var(--font-display);font-size:clamp(1.7rem,5vw,2.6rem);line-height:1.1;margin:18px 0 18px}
 .ev-facts{padding:6px 22px;margin-bottom:22px}
 .ev-fact{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:2px dashed rgba(20,17,16,.25)}
