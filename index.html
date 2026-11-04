@@ -364,6 +364,23 @@ button{ font-family:inherit; cursor:pointer; }
 
 :focus-visible{ outline: 3px solid var(--off-white); outline-offset:3px; }
 
+
+/* Compact upcoming-event banner in the homepage hero */
+.hero-upcoming-event{
+  display:none; align-items:center; justify-content:space-between; gap:12px;
+  width:min(100%,560px); margin-top:24px; padding:10px 12px;
+  background:rgba(20,17,16,.16); border:2px solid rgba(244,239,227,.72);
+  border-radius:10px; color:var(--off-white);
+}
+.hero-upcoming-poster{width:68px; height:68px; flex:0 0 68px; object-fit:cover; border:2px solid var(--off-white); border-radius:7px; background:rgba(20,17,16,.2);}
+.hero-upcoming-copy{min-width:0; flex:1; display:grid; gap:2px;}
+.hero-upcoming-label{font-size:.66rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; opacity:.8;}
+.hero-upcoming-name{font-family:var(--font-display); font-size:clamp(.78rem,1.7vw,1rem); line-height:1.25; overflow-wrap:anywhere;}
+.hero-upcoming-meta{font-size:.76rem; opacity:.88;}
+.hero-upcoming-link{flex:0 0 auto; padding:9px 12px; border:2px solid var(--black); border-radius:6px; background:var(--off-white); color:var(--red); font-family:var(--font-display); font-size:.68rem; box-shadow:3px 3px 0 var(--black);}
+.hero-upcoming-link:hover{transform:translateY(-2px);}
+@media(max-width:520px){.hero-upcoming-event{gap:8px; padding:9px;}.hero-upcoming-poster{width:56px;height:56px;flex-basis:56px;}.hero-upcoming-link{font-size:.58rem; padding:7px 8px;}.hero-upcoming-meta{font-size:.68rem;}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -400,6 +417,15 @@ button{ font-family:inherit; cursor:pointer; }
       <p style="font-family:var(--font-tag); font-style:italic; font-weight:700; font-size:1.3rem; margin-top:18px; max-width:480px;">
         Hyderabad's live Telugu jamming community — where a raagam becomes a room full of strangers singing the same line.
       </p>
+      <a id="hero-upcoming-event" class="hero-upcoming-event" href="events.html" aria-label="View the upcoming Anuraagam event">
+        <img id="hero-upcoming-poster" class="hero-upcoming-poster" src="assets/logo.png" alt="Upcoming event poster">
+        <span class="hero-upcoming-copy">
+          <span class="hero-upcoming-label">Upcoming event</span>
+          <span id="hero-upcoming-name" class="hero-upcoming-name">Loading next event…</span>
+          <span id="hero-upcoming-meta" class="hero-upcoming-meta"></span>
+        </span>
+        <span class="hero-upcoming-link">VIEW EVENT →</span>
+      </a>
       <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:34px;">
         <a href="events.html" class="btn btn-solid">🎟 Book Your Seat</a>
         <a href="about.html" class="btn btn-outline">What is Anuraagam?</a>
@@ -703,8 +729,13 @@ document.addEventListener('DOMContentLoaded', () => {
 (async function () {
   const container = document.querySelector('#next-event-container');
   const heroBadge = document.querySelector('#hero-next-badge');
+  const heroEvent = document.querySelector('#hero-upcoming-event');
+  const heroEventName = document.querySelector('#hero-upcoming-name');
+  const heroEventMeta = document.querySelector('#hero-upcoming-meta');
+  const heroEventPoster = document.querySelector('#hero-upcoming-poster');
 
   if (!supabaseClient) {
+    if (heroEvent) heroEvent.style.display = 'none';
     container.innerHTML = `<p style="opacity:.85;">Couldn't connect to load the next session. Please refresh.</p>`;
     return;
   }
@@ -720,6 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .limit(1);
 
   if (error || !events || events.length === 0) {
+    if (heroEvent) heroEvent.style.display = 'none';
     heroBadge.style.display = 'none';
     container.innerHTML = `
       <div class="card-paper card" style="text-align:center;">
@@ -739,6 +771,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   heroBadge.textContent = `Next session · ${shortDateLabel}`;
   heroBadge.style.display = 'inline-flex';
+
+  // Keep the hero banner compact and link it to the selected event.
+  if (heroEvent && heroEventName && heroEventMeta) {
+    heroEvent.href = `event.html?id=${encodeURIComponent(ev.id)}`;
+    heroEventName.textContent = ev.name || 'Upcoming Anuraagam event';
+    if (heroEventPoster) {
+      if (ev.poster_url) {
+        heroEventPoster.src = ev.poster_url;
+        heroEventPoster.alt = `${ev.name || 'Upcoming event'} poster`;
+      } else {
+        heroEventPoster.src = 'assets/logo.png';
+        heroEventPoster.alt = 'Anuraagam event';
+      }
+    }
+    const venueLabel = ev.venue || 'Venue to be announced';
+    heroEventMeta.textContent = `${shortDateLabel} · ${venueLabel}`;
+    heroEvent.style.display = 'flex';
+  }
 
   container.innerHTML = `
     <div class="ticket reveal">
