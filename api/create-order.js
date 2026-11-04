@@ -41,8 +41,7 @@ module.exports = async (req, res) => {
   attendeeEmail,
   attendeePhone,
   promoCode,
-  collegeIdPath
-} = req.body || {};
+  collegeIdPath, categoryIndex} = req.body || {};
     const quantity = Math.max(1, Math.min(10, parseInt(qty, 10) || 1));
 
     const { data: event, error: eventErr } = await supabaseAdmin
@@ -56,7 +55,12 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'This event is no longer available.' });
     }
 
-const ticketTotal = event.price * quantity;
+const cats = Array.isArray(event.ticket_categories) && event.ticket_categories.length
+      ? event.ticket_categories
+      : [{ name: 'General Entry', price: event.price }];
+    const category = cats[Math.min(Math.max(parseInt(categoryIndex, 10) || 0, 0), cats.length - 1)];
+    const unitPrice = Number(category.price) || 0;
+    const ticketTotal = unitPrice * quantity;
 
 const code = (promoCode || "").trim().toUpperCase();
 const isCollegeFreePass = code === "MALLAREDDY";
@@ -136,7 +140,8 @@ if (total === 0) {
         event_name: event.name,
         event_date: event.event_date,
         event_venue: event.venue,
-        price_per_seat: event.price,
+        price_per_seat: unitPrice,
+        ticket_category: category.name,
         quantity,
         subtotal,
         discount,
@@ -167,7 +172,7 @@ if (total === 0) {
     orderId: freeOrder.id,
     bookingId,
     breakdown: {
-      pricePerSeat: event.price,
+      pricePerSeat: unitPrice,
       quantity,
       subtotal,
       discount,
@@ -195,7 +200,8 @@ if (total === 0) {
       event_name: event.name,
       event_date: event.event_date,
       event_venue: event.venue,
-      price_per_seat: event.price,
+      price_per_seat: unitPrice,
+        ticket_category: category.name,
       quantity,
       subtotal,
 discount,
@@ -211,7 +217,10 @@ total,
     });
 
     if (insertErr) {
+      // Stop BEFORE the customer pays: if the order row can't be saved, a paid
+      // payment would have no order to attach to.
       console.error('order insert failed:', insertErr);
+      return res.status(500).json({ error: 'Unable to create order. Please try again.' });
     }
 
     return res.status(200).json({
@@ -219,7 +228,7 @@ total,
       amount: order.amount,
       currency: order.currency,
       keyId: process.env.RAZORPAY_KEY_ID,
-      breakdown: { pricePerSeat: event.price, quantity, subtotal, fee, total },
+      breakdown: { pricePerSeat: unitPrice, quantity, subtotal, fee, total },
     });
   } catch (err) {
     console.error('create-order error:', err);

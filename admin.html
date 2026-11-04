@@ -498,9 +498,19 @@ button{ font-family:inherit; cursor:pointer; }
               <button type="button" id="preview-map-btn" class="btn btn-black" style="padding:0 16px; white-space:nowrap;">📍 View on Maps</button>
             </div>
           </div>
+          <input type="hidden" id="ev-price">
           <div class="form-field">
-            <label for="ev-price">Price per seat (₹)</label>
-            <input type="number" id="ev-price" min="0" required placeholder="499">
+            <label for="ev-poster">Event poster</label>
+            <input type="file" id="ev-poster" accept="image/*">
+            <input type="hidden" id="ev-poster-url">
+            <img id="ev-poster-preview" alt="Poster preview" style="display:none; margin-top:10px; width:100%; max-width:320px; aspect-ratio:16/9; object-fit:cover; border:3px solid var(--black); border-radius:8px;">
+            <p style="font-size:.8rem; opacity:.7; margin-top:6px;">Landscape 16:9 works best (for example 1280×720). Max 5 MB.</p>
+          </div>
+          <div class="form-field">
+            <label>Ticket categories</label>
+            <div id="cat-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+            <button type="button" id="add-cat-btn" class="btn btn-outline" style="margin-top:10px; color:var(--black); border-color:var(--black);">+ Add Ticket Category</button>
+            <p style="font-size:.8rem; opacity:.7; margin-top:6px;">Any name and any price, for example Early Bird ₹799 or Single Pass ₹1299. The lowest price is shown as “onwards” on the site.</p>
           </div>
          <div class="form-field">
   <label>Promo Codes</label>
@@ -887,6 +897,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const formTitle = document.querySelector('#form-title');
 
 function resetForm() {
+  resetExtras();
   form.reset();
 
   document.querySelector('#event-id').value = '';
@@ -1016,6 +1027,70 @@ function getPromoCodesFromForm() {
 document.querySelector('#add-promo-btn').addEventListener('click', () => {
   addPromoRow();
 });
+  // ---- poster + ticket categories ----
+  const catListEl = document.querySelector('#cat-list');
+  const posterInput = document.querySelector('#ev-poster');
+  const posterPrev = document.querySelector('#ev-poster-preview');
+  function addCatRow(c) {
+    c = c || {};
+    const row = document.createElement('div');
+    row.className = 'cat-row';
+    row.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)) auto; gap:8px; align-items:center;';
+    row.innerHTML = '<input type="text" class="cat-name" placeholder="Name, e.g. Early Bird" maxlength="60">' +
+      '<input type="number" class="cat-price" placeholder="Price ₹" min="0">' +
+      '<input type="text" class="cat-info" placeholder="Details (optional)" maxlength="200">' +
+      '<button type="button" class="btn btn-outline cat-del" style="padding:8px 12px; color:var(--black); border-color:var(--black);" aria-label="Remove category">✕</button>';
+    row.querySelector('.cat-name').value = c.name || '';
+    row.querySelector('.cat-price').value = (c.price === 0 || c.price) ? c.price : '';
+    row.querySelector('.cat-info').value = c.info || '';
+    row.querySelector('.cat-del').addEventListener('click', () => row.remove());
+    catListEl.appendChild(row);
+  }
+  function showPoster(url) {
+    document.querySelector('#ev-poster-url').value = url || '';
+    posterPrev.src = url || '';
+    posterPrev.style.display = url ? 'block' : 'none';
+  }
+  function resetExtras() { catListEl.innerHTML = ''; addCatRow(); showPoster(''); posterInput.value = ''; }
+  function loadExtras(ev) {
+    catListEl.innerHTML = '';
+    const cats = Array.isArray(ev.ticket_categories) && ev.ticket_categories.length ? ev.ticket_categories : [{ name: 'General Entry', price: ev.price }];
+    cats.forEach(addCatRow);
+    showPoster(ev.poster_url || '');
+    posterInput.value = '';
+  }
+  async function buildExtras() {
+    const rows = [...catListEl.querySelectorAll('.cat-row')].map(r => ({
+      name: r.querySelector('.cat-name').value.trim(),
+      price: parseInt(r.querySelector('.cat-price').value, 10),
+      info: r.querySelector('.cat-info').value.trim()
+    })).filter(c => c.name || !isNaN(c.price));
+    if (!rows.length) throw new Error('Add at least one ticket category.');
+    rows.forEach(c => {
+      if (!c.name) throw new Error('Every ticket category needs a name.');
+      if (isNaN(c.price) || c.price < 0) throw new Error('Enter a valid price for "' + c.name + '".');
+      if (!c.info) delete c.info;
+    });
+    let posterUrl = document.querySelector('#ev-poster-url').value;
+    const file = posterInput.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) throw new Error('Poster must be an image file.');
+      if (file.size > 5 * 1024 * 1024) throw new Error('Poster must be under 5 MB.');
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const path = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      const up = await supabaseClient.storage.from('event-posters').upload(path, file, { contentType: file.type, cacheControl: '31536000' });
+      if (up.error) throw new Error('Poster upload failed: ' + up.error.message);
+      posterUrl = supabaseClient.storage.from('event-posters').getPublicUrl(path).data.publicUrl;
+    }
+    return { poster_url: posterUrl || null, ticket_categories: rows, price: Math.min(...rows.map(c => c.price)) };
+  }
+  document.querySelector('#add-cat-btn').addEventListener('click', () => addCatRow());
+  posterInput.addEventListener('change', () => {
+    const f = posterInput.files[0];
+    if (f) { posterPrev.src = URL.createObjectURL(f); posterPrev.style.display = 'block'; }
+  });
+  resetExtras();
+
   async function loadEvents() {
     const tbody = document.querySelector('#events-tbody');
     const { data: events, error } = await supabaseClient
@@ -1079,6 +1154,7 @@ promos.forEach(promo => {
   promo.minQty || 1
 );
 });
+        loadExtras(ev);
         document.querySelector('#ev-desc').value = ev.description || '';
         document.querySelector('#ev-published').checked = ev.is_published;
         formTitle.textContent = 'Edit Event';
@@ -1176,6 +1252,8 @@ promo_codes: getPromoCodesFromForm(),
   description: document.querySelector('#ev-desc').value.trim(),
   is_published: document.querySelector('#ev-published').checked
 };
+
+    try { Object.assign(payload, await buildExtras()); } catch (err) { statusEl.textContent = 'Error: ' + err.message; return; }
 
     const query = id
       ? supabaseClient.from('events').update(payload).eq('id', id)

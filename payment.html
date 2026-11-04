@@ -845,11 +845,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadingEl.style.display = 'none';
   contentEl.style.display = 'grid';
+  const realCats = Array.isArray(event.ticket_categories) ? event.ticket_categories.filter(x => x && x.name) : [];
+  const cats = realCats.length ? realCats : [{ name: 'General Entry', price: event.price }];
+  const catIdx = Math.min(Math.max(parseInt(params.get('cat'), 10) || 0, 0), cats.length - 1);
+  const chosenCat = cats[catIdx];
+  event.price = Number(chosenCat.price) || 0;
 
   const dateLabel = new Date(event.event_date).toLocaleString('en-IN', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit'
   });
-  document.querySelector('#sum-name').textContent = event.name;
+  document.querySelector('#sum-name').textContent = realCats.length ? event.name + ' — ' + chosenCat.name : event.name;
   document.querySelector('#sum-date').textContent = dateLabel;
   document.querySelector('#sum-venue').textContent = event.venue;
   document.querySelector('#sum-directions').href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(event.venue);
@@ -863,6 +868,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (profile && profile.phone) document.querySelector('#phone').value = profile.phone;
 
   const qtyInput = document.querySelector('#qty');
+  const qtyParam = parseInt(params.get('qty'), 10);
+  if (qtyParam > 0) qtyInput.value = Math.min(qtyParam, 10);
   const qtyMinus = document.querySelector('#qty-minus');
 const qtyPlus = document.querySelector('#qty-plus');
 
@@ -892,6 +899,7 @@ qtyPlus.addEventListener('click', () => {
   const totalEl = document.querySelector('#sum-total');
   const feeEl = document.querySelector('#sum-fee');
   const statusEl = document.querySelector('#payment-status');
+  const successBox = document.querySelector('#payment-success');
   let promoDiscount = 0;
 let appliedPromo = "";
 
@@ -1159,6 +1167,7 @@ if (!Number.isInteger(qty) || qty < 1) {
       attendeeEmail,
       attendeePhone,
       promoCode: appliedPromo,
+      categoryIndex: catIdx,
       collegeIdPath
     })
 });

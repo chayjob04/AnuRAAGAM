@@ -366,6 +366,7 @@ button{ font-family:inherit; cursor:pointer; }
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/booking.css">
 </head>
 <body>
 <div class="grain"></div>
@@ -641,36 +642,34 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  container.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:28px;';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   container.innerHTML = events.map(ev => {
     const d = new Date(ev.event_date);
-    const day = d.toLocaleDateString('en-IN', { day: '2-digit' });
-    const month = d.toLocaleDateString('en-IN', { month: 'short' }).toUpperCase();
     const dateLabel = d.toLocaleString('en-IN', {
       weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit'
     });
-    const isShowcase = ev.tagline.toLowerCase().includes('showcase');
+    const cats = Array.isArray(ev.ticket_categories) ? ev.ticket_categories : [];
+    const prices = cats.map(c => Number(c.price)).filter(n => !isNaN(n));
+    const from = prices.length ? Math.min(...prices) : (Number(ev.price) || 0);
+    const priceLabel = from === 0 ? 'Free entry' : '₹' + from.toLocaleString('en-IN') + (prices.length > 1 ? ' onwards' : '');
+    const poster = ev.poster_url
+      ? `<img src="${esc(ev.poster_url)}" alt="${esc(ev.name)} poster" loading="lazy">`
+      : `<img class="ph" src="assets/logo.png" alt="">`;
+    const link = 'event.html?id=' + encodeURIComponent(ev.id);
 
     return `
-      <div class="ticket reveal">
-        <div class="ticket-main">
-          <span class="tag-pill" style="color:${isShowcase ? 'var(--red-deep)' : 'var(--coral)'}; border-color:${isShowcase ? 'var(--red-deep)' : 'var(--coral)'};">${ev.tagline}</span>
-          <h3 style="font-size:1.5rem; margin-top:14px;">${ev.name}</h3>
-          <p style="margin-top:10px; opacity:.75;">${dateLabel}</p>
-          <p style="opacity:.75; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-            📍 ${ev.venue}
-            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.venue)}" target="_blank" rel="noopener" style="font-size:.8rem; font-weight:700; color:var(--coral); text-decoration:underline;">Get Directions ↗</a>
-          </p>
-          ${ev.description ? `<p style="margin-top:14px; font-size:.92rem; opacity:.8; white-space:pre-wrap;">${ev.description}</p>` : ''}
-          <div style="margin-top:20px;">
-            <a href="payment.html?event=${ev.id}" class="btn btn-coral">🎟 Book Now — ₹${ev.price}</a>
-          </div>
+      <article class="card-paper card ev-card">
+        <a class="poster" href="${link}" aria-label="${esc(ev.name)}">${poster}</a>
+        <div class="body">
+          <span class="tag-pill" style="color:var(--coral); border-color:var(--coral); align-self:flex-start;">${esc(ev.tagline)}</span>
+          <h3>${esc(ev.name)}</h3>
+          <p class="meta">${esc(dateLabel)}</p>
+          <p class="meta">📍 ${esc(ev.venue)}</p>
+          <p class="from">${priceLabel}</p>
+          <a href="${link}" class="btn btn-coral">Book Now</a>
         </div>
-        <div class="ticket-stub">
-          <span style="font-family:var(--font-display); font-size:1.4rem;">${day}</span>
-          <span style="font-size:.75rem; text-transform:uppercase;">${month}</span>
-        </div>
-      </div>
-    `;
+      </article>`;
   }).join('');
 })();
 </script>

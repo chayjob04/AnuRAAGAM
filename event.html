@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="/favicon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event — Anuraagam</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/booking.css">
+</head>
+<body>
+<header class="site-header">
+  <nav class="nav container">
+    <a href="index.html" class="brand"><img src="assets/logo.png" alt="Anuraagam logo"></a>
+    <button class="nav-toggle" aria-label="Toggle menu">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="events.html" class="active">Events</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html">Admin</a></li>
+      <li id="nav-auth-slot"><a href="login.html">Login</a></li>
+    </ul>
+  </nav>
+</header>
+<section class="section" style="padding-top:36px; padding-bottom:140px;">
+  <div class="container" style="max-width:760px;">
+    <a href="events.html" class="back-link">← All events</a>
+    <p id="ev-loading">Loading event…</p>
+    <div id="ev-content" style="display:none;">
+      <div class="poster-lg" id="ev-poster"></div>
+      <h1 class="ev-title" id="ev-name"></h1>
+      <span class="tag-pill" id="ev-tag" style="color:var(--off-white);"></span>
+      <div class="card-paper ev-facts" style="margin-top:22px;" id="ev-facts"></div>
+      <div class="card-paper ev-about" id="ev-about" style="display:none;"><h2>About the event</h2><p id="ev-desc"></p></div>
+    </div>
+  </div>
+</section>
+<div class="book-bar" id="book-bar" style="display:none;">
+  <div class="bar-inner">
+    <div><strong id="bar-price"></strong><small id="bar-sub">per ticket</small></div>
+    <a id="bar-btn" class="btn btn-coral" href="#">Book Now</a>
+  </div>
+</div>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <img src="assets/logo.png" alt="Anuraagam" style="height:56px; margin-bottom:14px;">
+        <p>Hyderabad's home for live Telugu singing & jamming sessions.</p>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="about.html">About Us</a>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <a href="contact.html">Contact Us</a>
+        <a href="events.html">Buy Tickets</a>
+        <a href="contact.html">Refund Policy</a>
+      </div>
+      <div>
+        <h4>Reach us</h4>
+        <p>Hyderabad, Telangana, India</p>
+        <p>anuraagamofficial@gmail.com</p>
+        <p>+91 8885417989</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Anuraagam. All rights reserved.</span>
+      <span>More than a song.</span>
+    </div>
+  </div>
+</footer>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/script.js"></script>
+<script>
+(async function () {
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function getCategories(ev) {
+  const c = Array.isArray(ev.ticket_categories) ? ev.ticket_categories.filter(x => x && x.name) : [];
+  return c.length ? c : [{ name: 'General Entry', price: Number(ev.price) || 0 }];
+}
+const money = n => (Number(n) === 0 ? 'Free' : '₹' + Number(n).toLocaleString('en-IN'));
+
+  const id = new URLSearchParams(location.search).get('id');
+  const loading = document.querySelector('#ev-loading');
+  if (!id || !supabaseClient) { loading.textContent = 'Event not found.'; return; }
+  const { data: ev, error } = await supabaseClient.from('events').select('*').eq('id', id).eq('is_published', true).maybeSingle();
+  if (error || !ev) { loading.textContent = 'This event is not available. It may have been removed.'; return; }
+
+  const d = new Date(ev.event_date);
+  const dateStr = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const timeStr = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+  document.title = ev.name + ' — Anuraagam';
+  document.querySelector('#ev-poster').innerHTML = ev.poster_url
+    ? `<img src="${esc(ev.poster_url)}" alt="${esc(ev.name)} poster">`
+    : `<img class="ph" src="assets/logo.png" alt="">`;
+  document.querySelector('#ev-name').textContent = ev.name;
+  document.querySelector('#ev-tag').textContent = ev.tagline || '';
+  document.querySelector('#ev-facts').innerHTML = `
+    <div class="ev-fact"><span class="ico">📅</span><div>${esc(dateStr)}</div></div>
+    <div class="ev-fact"><span class="ico">🕘</span><div>${esc(timeStr)}</div></div>
+    <div class="ev-fact"><span class="ico">📍</span><div>${esc(ev.venue)}<br><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.venue)}" target="_blank" rel="noopener">Get Directions ↗</a></div></div>`;
+  if (ev.description) {
+    document.querySelector('#ev-about').style.display = 'block';
+    document.querySelector('#ev-desc').textContent = ev.description;
+  }
+  const prices = getCategories(ev).map(c => Number(c.price) || 0);
+  const from = Math.min(...prices);
+  const bar = document.querySelector('#book-bar'), btn = document.querySelector('#bar-btn');
+  document.querySelector('#bar-price').textContent = prices.length > 1 ? money(from) + ' onwards' : money(from);
+  if (d < new Date()) {
+    btn.textContent = 'Event ended'; btn.removeAttribute('href'); btn.setAttribute('disabled', '');
+    document.querySelector('#bar-sub').textContent = '';
+  } else {
+    btn.href = 'tickets.html?event=' + encodeURIComponent(ev.id);
+  }
+  loading.style.display = 'none';
+  document.querySelector('#ev-content').style.display = 'block';
+  bar.style.display = 'block';
+})();
+</script>
+</body>
+</html>
