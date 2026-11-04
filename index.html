@@ -742,7 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   container.innerHTML = `
     <div class="ticket reveal">
-      <div class="ticket-main">
+      <div class="ticket-main" style="display:grid; grid-template-columns:1fr auto; column-gap:24px; justify-items:start; align-items:start;">${ev.poster_url ? `<a href="event.html?id=${ev.id}" style="grid-column:2; grid-row:1 / span 4; align-self:center;"><img src="${ev.poster_url}" alt="" style="display:block; width:clamp(96px, 22vw, 160px); aspect-ratio:1/1; object-fit:cover; border:3px solid var(--black); border-radius:10px;"></a>` : ''}
         <span class="tag-pill" style="color:var(--coral); border-color:var(--coral);">${ev.tagline}</span>
         <h3 style="font-size:1.6rem; margin-top:14px;">${ev.name}</h3>
         <p style="margin-top:10px; opacity:.75;">
